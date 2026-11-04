@@ -201,11 +201,11 @@ export const AdminMasterAlumniTab: React.FC = () => {
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0 border border-slate-200 px-2 py-1 rounded-md">
             <button
               type="button"
               onClick={handleExportExcel}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0"
               title="Ekspor seluruh data siswa lulusan ke berkas Excel (.xlsx)"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-slate-700 shrink-0" />
@@ -223,7 +223,7 @@ export const AdminMasterAlumniTab: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsImportModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Upload className="w-3.5 h-3.5 text-slate-600 shrink-0" />
               <span>Impor Berkas</span>
