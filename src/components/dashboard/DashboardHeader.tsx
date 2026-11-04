@@ -108,7 +108,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between shadow-xs">
+    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3.5 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between shadow-xs">
       {/* Greetings Area (Left) matching Wireframe */}
       <div className="flex items-center gap-2.5 sm:gap-3">
         <button

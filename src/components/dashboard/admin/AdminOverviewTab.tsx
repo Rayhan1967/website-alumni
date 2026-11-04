@@ -325,7 +325,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-[#0d2346] text-white rounded-t-md p-6 sm:p-7 border border-[#163868] shadow-sm relative z-20">
+      <div className="bg-[#0d2346] text-white rounded-t-md p-6 sm:p-7 border border-[#163868] shadow-sm relative z-10">
         <div className="relative z-10 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
