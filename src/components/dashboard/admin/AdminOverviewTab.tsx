@@ -2,10 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useAdminStore } from "@/store/adminStore";
 import {
   ArrowRight,
-  RefreshCw,
   CheckCircle2,
-  Database,
-  ShieldCheck,
   ChevronDown,
   Check,
   PieChart,
@@ -322,8 +319,12 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   });
 
   // Interactive Activity Chart State
-  const [activityChartMode, setActivityChartMode] = useState<"pilar" | "detail">("pilar");
-  const [hoveredActivityKey, setHoveredActivityKey] = useState<string | null>(null);
+  const [activityChartMode, setActivityChartMode] = useState<
+    "pilar" | "detail"
+  >("pilar");
+  const [hoveredActivityKey, setHoveredActivityKey] = useState<string | null>(
+    null,
+  );
 
   // Perhitungan Distribusi Aktivitas Lulusan (Eksklusif & Dinamis)
   const totalRespondentsCount = filteredRespondents.length;
@@ -333,16 +334,20 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
 
     // 1. Pilar Utama (BKK)
     const kerjaCount = filteredRespondents.filter(
-      (r) => r.statusKegiatan === "KERJA" || r.statusKegiatan === "KERJA_KULIAH",
+      (r) =>
+        r.statusKegiatan === "KERJA" || r.statusKegiatan === "KERJA_KULIAH",
     ).length;
     const usahaCount = filteredRespondents.filter(
-      (r) => r.statusKegiatan === "WIRAUSAHA" || r.statusKegiatan === "WIRAUSAHA_KULIAH",
+      (r) =>
+        r.statusKegiatan === "WIRAUSAHA" ||
+        r.statusKegiatan === "WIRAUSAHA_KULIAH",
     ).length;
     const kuliahCount = filteredRespondents.filter(
       (r) => r.statusKegiatan === "KULIAH",
     ).length;
     const belumCount = filteredRespondents.filter(
-      (r) => r.statusKegiatan === "BELUM_KERJA" || r.statusKegiatan === "LAINNYA",
+      (r) =>
+        r.statusKegiatan === "BELUM_KERJA" || r.statusKegiatan === "LAINNYA",
     ).length;
 
     const pilarItems = [
@@ -351,7 +356,8 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Bekerja",
         subNote: "Termasuk kerja sambil kuliah",
         count: kerjaCount,
-        percent: total > 0 ? parseFloat(((kerjaCount / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0 ? parseFloat(((kerjaCount / total) * 100).toFixed(1)) : 0,
         color: "#0d2346",
       },
       {
@@ -359,15 +365,17 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Wirausaha",
         subNote: "Wirausaha mandiri & kemitraan",
         count: usahaCount,
-        percent: total > 0 ? parseFloat(((usahaCount / total) * 100).toFixed(1)) : 0,
-        color: "#059669",
+        percent:
+          total > 0 ? parseFloat(((usahaCount / total) * 100).toFixed(1)) : 0,
+        color: "#F4EB6C",
       },
       {
         key: "KULIAH",
         name: "Melanjutkan Kuliah",
         subNote: "Pendidikan tinggi vokasi/akademik",
         count: kuliahCount,
-        percent: total > 0 ? parseFloat(((kuliahCount / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0 ? parseFloat(((kuliahCount / total) * 100).toFixed(1)) : 0,
         color: "#2563eb",
       },
       {
@@ -375,18 +383,32 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Mencari Kerja",
         subNote: "Masa tunggu / pencarian aktif",
         count: belumCount,
-        percent: total > 0 ? parseFloat(((belumCount / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0 ? parseFloat(((belumCount / total) * 100).toFixed(1)) : 0,
         color: "#94a3b8",
       },
     ].filter((item) => item.count > 0 || total === 0);
 
     // 2. Detail Granular Sub-Kategori
-    const countKerjaKuliah = filteredRespondents.filter((r) => r.statusKegiatan === "KERJA_KULIAH").length;
-    const countKerjaMurni = filteredRespondents.filter((r) => r.statusKegiatan === "KERJA").length;
-    const countUsahaMurni = filteredRespondents.filter((r) => r.statusKegiatan === "WIRAUSAHA").length;
-    const countUsahaKuliah = filteredRespondents.filter((r) => r.statusKegiatan === "WIRAUSAHA_KULIAH").length;
-    const countKuliahOnly = filteredRespondents.filter((r) => r.statusKegiatan === "KULIAH").length;
-    const countMencari = filteredRespondents.filter((r) => r.statusKegiatan === "BELUM_KERJA" || r.statusKegiatan === "LAINNYA").length;
+    const countKerjaKuliah = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "KERJA_KULIAH",
+    ).length;
+    const countKerjaMurni = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "KERJA",
+    ).length;
+    const countUsahaMurni = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "WIRAUSAHA",
+    ).length;
+    const countUsahaKuliah = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "WIRAUSAHA_KULIAH",
+    ).length;
+    const countKuliahOnly = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "KULIAH",
+    ).length;
+    const countMencari = filteredRespondents.filter(
+      (r) =>
+        r.statusKegiatan === "BELUM_KERJA" || r.statusKegiatan === "LAINNYA",
+    ).length;
 
     const detailItems = [
       {
@@ -394,15 +416,21 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Kerja & Kuliah",
         subNote: "Bekerja sekaligus studi",
         count: countKerjaKuliah,
-        percent: total > 0 ? parseFloat(((countKerjaKuliah / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0
+            ? parseFloat(((countKerjaKuliah / total) * 100).toFixed(1))
+            : 0,
         color: "#1e40af",
       },
       {
         key: "KERJA",
-        name: "Bekerja Murni",
+        name: "Bekerja",
         subNote: "Karyawan / teknisi industri",
         count: countKerjaMurni,
-        percent: total > 0 ? parseFloat(((countKerjaMurni / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0
+            ? parseFloat(((countKerjaMurni / total) * 100).toFixed(1))
+            : 0,
         color: "#0d2346",
       },
       {
@@ -410,7 +438,10 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Wirausaha Mandiri",
         subNote: "Usaha sendiri / freelance",
         count: countUsahaMurni,
-        percent: total > 0 ? parseFloat(((countUsahaMurni / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0
+            ? parseFloat(((countUsahaMurni / total) * 100).toFixed(1))
+            : 0,
         color: "#059669",
       },
       {
@@ -418,15 +449,21 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Wirausaha & Kuliah",
         subNote: "Wirausaha sambil kuliah",
         count: countUsahaKuliah,
-        percent: total > 0 ? parseFloat(((countUsahaKuliah / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0
+            ? parseFloat(((countUsahaKuliah / total) * 100).toFixed(1))
+            : 0,
         color: "#0d9488",
       },
       {
         key: "KULIAH",
-        name: "Kuliah Murni",
+        name: "Kuliah",
         subNote: "Fokus studi perguruan tinggi",
         count: countKuliahOnly,
-        percent: total > 0 ? parseFloat(((countKuliahOnly / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0
+            ? parseFloat(((countKuliahOnly / total) * 100).toFixed(1))
+            : 0,
         color: "#3b82f6",
       },
       {
@@ -434,7 +471,8 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         name: "Mencari Kerja",
         subNote: "Sedang proses melamar",
         count: countMencari,
-        percent: total > 0 ? parseFloat(((countMencari / total) * 100).toFixed(1)) : 0,
+        percent:
+          total > 0 ? parseFloat(((countMencari / total) * 100).toFixed(1)) : 0,
         color: "#94a3b8",
       },
     ].filter((item) => item.count > 0 || total === 0);
@@ -610,222 +648,72 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         </div>
       </div>
 
-      {/* 4 Quick Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Target Kuota */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
-              Target Jumlah Lulusan
-            </span>
-            <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
-              <SolidUsersIcon className="w-4 h-4 text-[#0d2346]" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {targetQuota}
-            </span>
-            <span className="text-xs text-slate-500">Siswa</span>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-2">
-            {isAllYears
-              ? `${totalMaster} siswa terdaftar di seluruh data pokok`
-              : `${totalMaster} siswa terdaftar di data pokok`}
-          </p>
-        </div>
-
-        {/* Card 2: Tingkat Pengisian */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
-              Tingkat Pengisian
-            </span>
-            <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
-              <SolidTrendingUpIcon className="w-4 h-4 text-[#0d2346]" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {responseRate}%
-            </span>
-            <span className="text-xs text-slate-500">
-              ({totalSubmitted} dari {targetQuota})
-            </span>
-          </div>
-          <div className="w-full h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
-            <div
-              className="h-full bg-[#0d2346] rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(Number(responseRate), 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Card 3: Total Responden Masuk */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
-              Total Responden Masuk
-            </span>
-            <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
-              <SolidClockIcon className="w-4 h-4 text-[#0d2346]" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {filteredRespondents.length}
-            </span>
-            <span className="text-xs text-slate-500">Kuesioner</span>
-          </div>
-          <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
-            <span className="text-emerald-700 font-semibold">
-              {totalSubmitted} Tamatan Terdata
-            </span>
-          </div>
-        </div>
-
-        {/* Card 4: Aktivitas Lulusan */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">
-                Aktivitas Lulusan
-              </span>
-              <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
-                <SolidBriefcaseIcon className="w-4 h-4 text-[#0d2346]" />
-              </div>
-            </div>
-
-            {/* Interactive Mini Segmented Bar */}
-            <div
-              className="w-full h-2 bg-slate-100 rounded-full mt-3 mb-2.5 flex overflow-hidden gap-0.5"
-              aria-label="Distribusi aktivitas lulusan"
-            >
-              {totalRespondentsCount > 0 ? (
-                <>
-                  <div
-                    style={{
-                      width: `${(countKerja / totalRespondentsCount) * 100}%`,
-                    }}
-                    className="h-full bg-[#0d2346] transition-all duration-300 hover:opacity-85"
-                    title={`Bekerja: ${countKerja} Siswa (${((countKerja / totalRespondentsCount) * 100).toFixed(1)}%)`}
-                  />
-                  <div
-                    style={{
-                      width: `${(countWirausaha / totalRespondentsCount) * 100}%`,
-                    }}
-                    className="h-full bg-emerald-600 transition-all duration-300 hover:opacity-85"
-                    title={`Wirausaha: ${countWirausaha} Siswa (${((countWirausaha / totalRespondentsCount) * 100).toFixed(1)}%)`}
-                  />
-                  <div
-                    style={{
-                      width: `${(countKuliahMurni / totalRespondentsCount) * 100}%`,
-                    }}
-                    className="h-full bg-blue-600 transition-all duration-300 hover:opacity-85"
-                    title={`Melanjutkan Kuliah: ${countKuliahMurni} Siswa (${((countKuliahMurni / totalRespondentsCount) * 100).toFixed(1)}%)`}
-                  />
-                  {countBelumKerja > 0 && (
-                    <div
-                      style={{
-                        width: `${(countBelumKerja / totalRespondentsCount) * 100}%`,
-                      }}
-                      className="h-full bg-slate-400 transition-all duration-300 hover:opacity-85"
-                      title={`Mencari Kerja: ${countBelumKerja} Siswa (${((countBelumKerja / totalRespondentsCount) * 100).toFixed(1)}%)`}
-                    />
-                  )}
-                </>
-              ) : (
-                <div className="w-full h-full bg-slate-200" />
-              )}
-            </div>
-
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#0d2346] shrink-0" />
-                  <span>Bekerja</span>
+      {/* Top Overview Section: 2 KPI Cards (Left) + Distribusi Aktivitas Lulusan (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Left 4 cols: Target Kuota & Tingkat Pengisian */}
+        <div className="lg:col-span-4 flex flex-col gap-4 justify-between">
+          {/* Card 1: Target Kuota */}
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">
+                  Target Jumlah Lulusan
                 </span>
-                <span className="font-bold text-slate-900">
-                  {countKerja} Siswa
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span>Melanjutkan Kuliah</span>
-                </span>
-                <span className="font-bold text-slate-900">
-                  {countKuliahMurni} Siswa
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-                  <span>Wirausaha</span>
-                </span>
-                <span className="font-bold text-slate-900">
-                  {countWirausaha} Siswa
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Visual Analytics Grid: 2 Kolom Seimbang (lg:grid-cols-12) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 6 cols: Partisipasi per Program Keahlian */}
-        <div className="lg:col-span-6 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="font-bold text-sm sm:text-base text-slate-900">
-                  Pengisian per Program Keahlian
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Jumlah data kuesioner yang telah terisi pada setiap jurusan
-                </p>
-              </div>
-              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
-                {isAllYears ? "Semua Angkatan" : `Angkatan ${selectedYear}`}
-              </span>
-            </div>
-
-            <div className="space-y-4 pt-3">
-              {jurusanStats.map((item) => (
-                <div key={item.code} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-800">
-                      {item.name}
-                    </span>
-                    <span className="font-light text-slate-700">
-                      {item.filled} dari {item.total} Siswa ({item.percent}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-700 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(item.percent, 100)}%` }}
-                    />
-                  </div>
+                <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
+                  <SolidUsersIcon className="w-4 h-4 text-[#0d2346]" />
                 </div>
-              ))}
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-slate-900">
+                  {targetQuota}
+                </span>
+                <span className="text-xs text-slate-500">Siswa</span>
+              </div>
             </div>
+            <p className="text-[11px] text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
+              {isAllYears
+                ? `${totalMaster} siswa terdaftar di seluruh data pokok`
+                : `${totalMaster} siswa terdaftar di data pokok`}
+            </p>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <button
-              onClick={() => onNavigateTab("master_alumni")}
-              className="text-[#0d2346] font-semibold hover:underline flex items-center gap-1"
-            >
-              <span>Buka Data Alumni</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+          {/* Card 2: Tingkat Pengisian */}
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500">
+                  Tingkat Pengisian
+                </span>
+                <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
+                  <SolidTrendingUpIcon className="w-4 h-4 text-[#0d2346]" />
+                </div>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-slate-900">
+                  {responseRate}%
+                </span>
+                <span className="text-xs text-slate-500">
+                  ({totalSubmitted} dari {targetQuota})
+                </span>
+              </div>
+              <div className="w-full h-2 bg-slate-100 rounded-full mt-2.5 overflow-hidden">
+                <div
+                  className="h-full bg-[#0d2346] rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(Number(responseRate), 100)}%` }}
+                />
+              </div>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span className="text-emerald-700 font-semibold">
+                {totalSubmitted} Tamatan Terdata
+              </span>
+              <span>{filteredRespondents.length} Kuesioner Masuk</span>
+            </div>
           </div>
         </div>
 
-        {/* Right 6 cols: Distribusi Aktivitas & Keterserapan Lulusan */}
-        <div className="lg:col-span-6 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
+        {/* Right 8 cols: Distribusi Aktivitas Lulusan */}
+        <div className="lg:col-span-8 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
             {/* Header with Mode Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
@@ -880,7 +768,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
                 Belum ada data kuesioner masuk untuk periode ini.
               </div>
             ) : (
-              <div className="pt-2 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+              <div className="pt-3 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
                 {/* SVG Donut Chart (5 cols) */}
                 <div className="sm:col-span-5 flex flex-col items-center justify-center">
                   <div className="relative w-36 h-36 sm:w-40 sm:h-40">
@@ -1012,92 +900,137 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         </div>
       </div>
 
-      {/* Row 2: Kuesioner Masuk Terbaru (12 cols) */}
-      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4">
-        <div>
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="font-bold text-sm sm:text-base text-slate-900">
-                Kuesioner Masuk Terbaru
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                5 alumni terakhir yang mengirimkan data penelusuran
-              </p>
+      {/* Main Grid: Program Keahlian Breakdown & Recent Submissions (Original Side-by-Side List) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left 7 cols: Partisipasi per Program Keahlian */}
+        <div className="lg:col-span-7 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                  Pengisian per Program Keahlian
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Jumlah data kuesioner yang telah terisi pada setiap jurusan
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
+                {isAllYears ? "Semua Angkatan" : `Angkatan ${selectedYear}`}
+              </span>
             </div>
-            <button
-              onClick={() => onNavigateTab("verifikasi")}
-              className="text-xs font-semibold text-blue-600 hover:underline"
-            >
-              Lihat Semua
-            </button>
+
+            <div className="space-y-4 pt-3">
+              {jurusanStats.map((item) => (
+                <div key={item.code} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-800">
+                      {item.name}
+                    </span>
+                    <span className="font-light text-slate-700">
+                      {item.filled} dari {item.total} Siswa ({item.percent}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-700 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(item.percent, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Desktop Responsive Grid / Mobile List */}
-          <div className="mt-4">
-            {recentSubmissions.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
-                Belum ada kuesioner masuk untuk periode ini.
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <button
+              onClick={() => onNavigateTab("master_alumni")}
+              className="text-[#0d2346] font-semibold hover:underline flex items-center gap-1"
+            >
+              <span>Buka Data Alumni</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Right 5 cols: Kuesioner Masuk Terbaru (Vertical List Form) */}
+        <div className="lg:col-span-5 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                  Kuesioner Masuk Terbaru
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  5 alumni terakhir yang mengirimkan data penelusuran
+                </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                {recentSubmissions.map((sub) => (
+              <button
+                onClick={() => onNavigateTab("verifikasi")}
+                className="text-xs font-semibold text-blue-600 hover:underline"
+              >
+                Lihat Semua
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-100 mt-1">
+              {recentSubmissions.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Belum ada kuesioner masuk untuk periode ini.
+                </div>
+              ) : (
+                recentSubmissions.map((sub) => (
                   <div
                     key={sub.submissionId}
                     onClick={() =>
                       onOpenRespondentDetail &&
                       onOpenRespondentDetail(sub.submissionId)
                     }
-                    className="p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs hover:bg-slate-50/50 transition cursor-pointer flex flex-col justify-between space-y-2.5"
+                    className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 rounded-lg px-2 -mx-2 transition cursor-pointer"
                   >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
-                          {sub.statusKegiatan === "KERJA"
-                            ? "Bekerja"
-                            : sub.statusKegiatan === "KULIAH"
-                              ? "Kuliah"
-                              : sub.statusKegiatan === "WIRAUSAHA"
-                                ? "Wirausaha"
-                                : sub.statusKegiatan === "KERJA_KULIAH"
-                                  ? "Kerja & Kuliah"
-                                  : "Mencari Kerja"}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          {new Date(sub.submittedAt).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </span>
-                      </div>
+                    <div className="min-w-0">
                       <p className="text-xs font-bold text-slate-900 truncate">
                         {sub.nama}
                       </p>
-                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      <p className="text-[11px] text-slate-500 truncate">
                         {sub.jurusan}
                       </p>
                     </div>
-
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-blue-700 font-medium">
-                      <span>Verifikasi</span>
-                      <ArrowRight className="w-3 h-3" />
+                    <div className="shrink-0 flex flex-col items-end">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
+                        {sub.statusKegiatan === "KERJA"
+                          ? "Bekerja"
+                          : sub.statusKegiatan === "KULIAH"
+                            ? "Kuliah"
+                            : sub.statusKegiatan === "WIRAUSAHA"
+                              ? "Wirausaha"
+                              : sub.statusKegiatan === "KERJA_KULIAH"
+                                ? "Kerja & Kuliah"
+                                : "Mencari Kerja"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(sub.submittedAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="pt-3 border-t border-slate-100 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-xl flex items-center justify-between text-xs">
-          <span className="text-slate-600">
-            Perlu mencetak rekapitulasi data?
-          </span>
-          <button
-            onClick={() => onNavigateTab("laporan")}
-            className="px-3 py-1.5 rounded-full bg-[#0d2346] hover:bg-[#163868] text-white font-semibold transition cursor-pointer"
-          >
-            Buka Laporan
-          </button>
+          <div className="pt-3 border-t border-slate-100 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-xl flex items-center justify-between text-xs">
+            <span className="text-slate-600">
+              Perlu mencetak rekapitulasi data?
+            </span>
+            <button
+              onClick={() => onNavigateTab("laporan")}
+              className="px-3 py-1.5 rounded-full bg-[#0d2346] hover:bg-[#163868] text-white font-semibold transition cursor-pointer"
+            >
+              Buka Laporan
+            </button>
+          </div>
         </div>
       </div>
     </div>
