@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useAdminStore } from "@/store/adminStore";
 import {
   ArrowRight,
@@ -6,7 +6,10 @@ import {
   CheckCircle2,
   Database,
   ShieldCheck,
+  ChevronDown,
+  Check,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   syncDashboardData,
   DashboardSyncResult,
@@ -165,6 +168,40 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   const [selectedYear, setSelectedYear] = useState<string>(() => {
     return settings.targetYear ? String(settings.targetYear) : "2025";
   });
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const yearDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Tutup dropdown saat klik di luar container
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (
+        yearDropdownRef.current &&
+        !yearDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsYearDropdownOpen(false);
+      }
+    };
+
+    if (isYearDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [isYearDropdownOpen]);
+
+  // Tutup dropdown saat menekan tombol Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsYearDropdownOpen(false);
+    };
+    if (isYearDropdownOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isYearDropdownOpen]);
 
   const isAllYears = selectedYear === "ALL";
 
@@ -308,33 +345,90 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
               </button>
             </div>
 
-            {/* Dropdown Pemilih Periode Tahun Angkatan (Clean & Minimalis) */}
-            <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
-              <label
-                htmlFor="overview-year-filter"
-                className="text-xs text-slate-300 font-medium"
-              >
+            {/* Dropdown Pemilih Periode Tahun Angkatan (Custom Styled) */}
+            <div
+              className="relative flex items-center gap-2.5 shrink-0 self-start md:self-auto"
+              ref={yearDropdownRef}
+            >
+              <span className="text-xs text-slate-300 font-medium">
                 Periode Angkatan:
-              </label>
-              <select
-                id="overview-year-filter"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="bg-[#163868] hover:bg-[#1d4680] text-white text-xs sm:text-sm font-semibold rounded-xl px-3 py-2 border border-white/25 focus:outline-hidden focus:ring-1 focus:ring-white/40 transition cursor-pointer"
-              >
-                <option value="ALL" className="bg-[#0d2346] text-white">
-                  Semua Angkatan
-                </option>
-                {availableYears.map((yr) => (
-                  <option
-                    key={yr}
-                    value={String(yr)}
-                    className="bg-[#0d2346] text-white"
+              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsYearDropdownOpen((prev) => !prev)}
+                  className="inline-flex items-center justify-between gap-2.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 active:bg-white/20 text-white text-xs sm:text-sm font-semibold border border-white/20 shadow-xs transition cursor-pointer"
+                  aria-haspopup="listbox"
+                  aria-expanded={isYearDropdownOpen}
+                >
+                  <span>
+                    {isAllYears ? "Semua Angkatan" : `Angkatan ${selectedYear}`}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 text-slate-300 transition-transform duration-200 shrink-0",
+                      isYearDropdownOpen && "rotate-180 text-white"
+                    )}
+                  />
+                </button>
+
+                {isYearDropdownOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute right-0 top-full mt-2 z-50 min-w-[190px] bg-white rounded-xl border border-slate-200 shadow-2xl py-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
                   >
-                    Angkatan {yr}
-                  </option>
-                ))}
-              </select>
+                    <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                      Pilih Angkatan
+                    </div>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={isAllYears}
+                      onClick={() => {
+                        setSelectedYear("ALL");
+                        setIsYearDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "w-full px-3.5 py-2 text-left text-xs sm:text-sm flex items-center justify-between transition-colors cursor-pointer",
+                        isAllYears
+                          ? "bg-slate-100 text-[#0d2346] font-bold"
+                          : "text-slate-700 hover:bg-slate-50 hover:text-[#0d2346] font-medium"
+                      )}
+                    >
+                      <span>Semua Angkatan</span>
+                      {isAllYears && (
+                        <Check className="w-4 h-4 text-[#0d2346] shrink-0 ml-2" />
+                      )}
+                    </button>
+                    {availableYears.map((yr) => {
+                      const isSelected = selectedYear === String(yr);
+                      return (
+                        <button
+                          key={yr}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            setSelectedYear(String(yr));
+                            setIsYearDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "w-full px-3.5 py-2 text-left text-xs sm:text-sm flex items-center justify-between transition-colors cursor-pointer",
+                            isSelected
+                              ? "bg-slate-100 text-[#0d2346] font-bold"
+                              : "text-slate-700 hover:bg-slate-50 hover:text-[#0d2346] font-medium"
+                          )}
+                        >
+                          <span>Angkatan {yr}</span>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-[#0d2346] shrink-0 ml-2" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
