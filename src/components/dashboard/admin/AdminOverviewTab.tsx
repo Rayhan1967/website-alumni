@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAdminStore } from "@/store/adminStore";
 import {
   ArrowRight,
@@ -134,36 +134,105 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     }
   };
 
-  const totalMaster = masterAlumni.length;
-  const totalSubmitted = masterAlumni.filter(
+  // Kumpulan tahun kelulusan yang tersedia dari data riil dan target settings
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set<number>();
+
+    masterAlumni.forEach((a) => {
+      const yr = Number(a.tahunLulus);
+      if (!isNaN(yr) && yr > 2000) yearsSet.add(yr);
+    });
+
+    respondents.forEach((r) => {
+      const yr = Number(r.tahunLulus);
+      if (!isNaN(yr) && yr > 2000) yearsSet.add(yr);
+    });
+
+    if (settings.targetYear && !isNaN(Number(settings.targetYear))) {
+      yearsSet.add(Number(settings.targetYear));
+    }
+
+    yearsSet.add(2025);
+    const currentYr = new Date().getFullYear();
+    if (currentYr > 2000) {
+      yearsSet.add(currentYr);
+    }
+
+    return Array.from(yearsSet).sort((a, b) => b - a);
+  }, [masterAlumni, respondents, settings.targetYear]);
+
+  // State pilihan periode tahun (default: settings.targetYear atau 2025)
+  const [selectedYear, setSelectedYear] = useState<string>(() => {
+    return settings.targetYear ? String(settings.targetYear) : "2025";
+  });
+
+  const isAllYears = selectedYear === "ALL";
+
+  // Data terfilter berdasarkan periode tahun
+  const filteredMaster = useMemo(() => {
+    if (isAllYears) return masterAlumni;
+    return masterAlumni.filter((a) => String(a.tahunLulus) === selectedYear);
+  }, [masterAlumni, isAllYears, selectedYear]);
+
+  const filteredRespondents = useMemo(() => {
+    if (isAllYears) return respondents;
+    return respondents.filter((r) => String(r.tahunLulus) === selectedYear);
+  }, [respondents, isAllYears, selectedYear]);
+
+  const totalMaster = filteredMaster.length;
+  const totalSubmitted = filteredMaster.filter(
     (a) => a.statusTracer === "SUDAH",
   ).length;
-  const targetQuota = settings.targetQuota || 250;
-  const responseRate =
-    totalMaster > 0 ? ((totalSubmitted / targetQuota) * 100).toFixed(1) : "0";
+
+  const targetQuota = useMemo(() => {
+    if (!isAllYears && Number(selectedYear) === settings.targetYear) {
+      return settings.targetQuota || totalMaster || 250;
+    }
+    if (isAllYears) {
+      return masterAlumni.length > 0
+        ? masterAlumni.length
+        : settings.targetQuota || 250;
+    }
+    return totalMaster > 0 ? totalMaster : 0;
+  }, [
+    isAllYears,
+    selectedYear,
+    settings.targetYear,
+    settings.targetQuota,
+    totalMaster,
+    masterAlumni.length,
+  ]);
+
+  const responseRate = useMemo(() => {
+    if (targetQuota <= 0) {
+      return totalSubmitted > 0 ? "100.0" : "0.0";
+    }
+    const rate = (totalSubmitted / targetQuota) * 100;
+    return rate > 100 ? "100.0" : rate.toFixed(1);
+  }, [totalSubmitted, targetQuota]);
 
   // Status Activities Counts
-  const countKerja = respondents.filter(
+  const countKerja = filteredRespondents.filter(
     (r) => r.statusKegiatan === "KERJA" || r.statusKegiatan === "KERJA_KULIAH",
   ).length;
   // Mahasiswa murni & wirausaha-kuliah
-  const countKuliahMurni = respondents.filter(
+  const countKuliahMurni = filteredRespondents.filter(
     (r) =>
       r.statusKegiatan === "KULIAH" || r.statusKegiatan === "WIRAUSAHA_KULIAH",
   ).length;
   // Total seluruh alumni yang berkuliah (termasuk yang sambil kerja)
-  const countKuliahTotal = respondents.filter(
+  const countKuliahTotal = filteredRespondents.filter(
     (r) =>
       r.statusKegiatan === "KULIAH" ||
       r.statusKegiatan === "KERJA_KULIAH" ||
       r.statusKegiatan === "WIRAUSAHA_KULIAH",
   ).length;
-  const countWirausaha = respondents.filter(
+  const countWirausaha = filteredRespondents.filter(
     (r) =>
       r.statusKegiatan === "WIRAUSAHA" ||
       r.statusKegiatan === "WIRAUSAHA_KULIAH",
   ).length;
-  const countBelumKerja = respondents.filter(
+  const countBelumKerja = filteredRespondents.filter(
     (r) => r.statusKegiatan === "BELUM_KERJA",
   ).length;
 
@@ -180,10 +249,10 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   ];
 
   const jurusanStats = jurusanList.map((j) => {
-    const totalInJurusan = masterAlumni.filter((a) =>
+    const totalInJurusan = filteredMaster.filter((a) =>
       a.jurusan.includes(j.name),
     ).length;
-    const filledInJurusan = masterAlumni.filter(
+    const filledInJurusan = filteredMaster.filter(
       (a) => a.jurusan.includes(j.name) && a.statusTracer === "SUDAH",
     ).length;
     const percent =
@@ -198,28 +267,31 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     };
   });
 
-  const recentSubmissions = respondents.slice(0, 5);
+  const recentSubmissions = filteredRespondents.slice(0, 5);
 
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
       <div className="bg-[#0d2346] text-white rounded-t-md p-6 sm:p-7 border border-[#163868] shadow-sm relative overflow-hidden">
-        <div className="relative z-10 max-w-4xl">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative z-10 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              Pemantauan Penelusuran Lulusan Angkatan {settings.targetYear}
+              {isAllYears
+                ? "Pemantauan Penelusuran Seluruh Lulusan"
+                : `Pemantauan Penelusuran Lulusan Angkatan ${selectedYear}`}
             </h1>
           </div>
 
-          <p className="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed">
+          <p className="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed max-w-3xl">
             Pantau kemajuan pengisian kuesioner, kelola data lulusan dan
             responden yang masuk, dan siapkan dokumen laporan penelusuran
             tamatan untuk sekolah dan dinas terkait.
           </p>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/10">
+          <div className="mt-5 flex flex-col md:flex-row md:items-center justify-between gap-4 pt-3 border-t border-white/10">
             <div className="flex flex-wrap items-center gap-3">
               <button
+                type="button"
                 onClick={() => onNavigateTab("master_alumni")}
                 className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-semibold border border-white/25 shadow-xs transition active:scale-95 cursor-pointer flex items-center gap-2"
               >
@@ -227,12 +299,42 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
                 <span>Data Alumni ({totalMaster} Siswa)</span>
               </button>
               <button
+                type="button"
                 onClick={() => onNavigateTab("verifikasi")}
                 className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold border border-white/20 transition active:scale-95 cursor-pointer flex items-center gap-2"
               >
                 <SolidFileCheckIcon className="w-4 h-4 text-slate-200" />
-                <span>Data Responden ({respondents.length} Masuk)</span>
+                <span>Data Responden ({filteredRespondents.length} Masuk)</span>
               </button>
+            </div>
+
+            {/* Dropdown Pemilih Periode Tahun Angkatan (Clean & Minimalis) */}
+            <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+              <label
+                htmlFor="overview-year-filter"
+                className="text-xs text-slate-300 font-medium"
+              >
+                Periode Angkatan:
+              </label>
+              <select
+                id="overview-year-filter"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="bg-[#163868] hover:bg-[#1d4680] text-white text-xs sm:text-sm font-semibold rounded-xl px-3 py-2 border border-white/25 focus:outline-hidden focus:ring-1 focus:ring-white/40 transition cursor-pointer"
+              >
+                <option value="ALL" className="bg-[#0d2346] text-white">
+                  Semua Angkatan
+                </option>
+                {availableYears.map((yr) => (
+                  <option
+                    key={yr}
+                    value={String(yr)}
+                    className="bg-[#0d2346] text-white"
+                  >
+                    Angkatan {yr}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -265,7 +367,9 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
             <span className="text-xs text-slate-500">Siswa</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-2">
-            {totalMaster} siswa terdaftar di data pokok
+            {isAllYears
+              ? `${totalMaster} siswa terdaftar di seluruh data pokok`
+              : `${totalMaster} siswa terdaftar di data pokok`}
           </p>
         </div>
 
@@ -307,7 +411,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl sm:text-3xl font-bold text-slate-900">
-              {respondents.length}
+              {filteredRespondents.length}
             </span>
             <span className="text-xs text-slate-500">Kuesioner</span>
           </div>
@@ -365,7 +469,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
               </p>
             </div>
             <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
-              Angkatan {settings.targetYear}
+              {isAllYears ? "Semua Angkatan" : `Angkatan ${selectedYear}`}
             </span>
           </div>
 
@@ -422,44 +526,50 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
             </div>
 
             <div className="divide-y divide-slate-100 mt-1">
-              {recentSubmissions.map((sub) => (
-                <div
-                  key={sub.submissionId}
-                  onClick={() =>
-                    onOpenRespondentDetail &&
-                    onOpenRespondentDetail(sub.submissionId)
-                  }
-                  className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 rounded-lg px-2 -mx-2 transition cursor-pointer"
-                >
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">
-                      {sub.nama}
-                    </p>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {sub.jurusan}
-                    </p>
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
-                      {sub.statusKegiatan === "KERJA"
-                        ? "Bekerja"
-                        : sub.statusKegiatan === "KULIAH"
-                          ? "Kuliah"
-                          : sub.statusKegiatan === "WIRAUSAHA"
-                            ? "Wirausaha"
-                            : sub.statusKegiatan === "KERJA_KULIAH"
-                              ? "Kerja & Kuliah"
-                              : "Mencari Kerja"}
-                    </span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">
-                      {new Date(sub.submittedAt).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
-                  </div>
+              {recentSubmissions.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Belum ada kuesioner masuk untuk periode ini.
                 </div>
-              ))}
+              ) : (
+                recentSubmissions.map((sub) => (
+                  <div
+                    key={sub.submissionId}
+                    onClick={() =>
+                      onOpenRespondentDetail &&
+                      onOpenRespondentDetail(sub.submissionId)
+                    }
+                    className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 rounded-lg px-2 -mx-2 transition cursor-pointer"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">
+                        {sub.nama}
+                      </p>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {sub.jurusan}
+                      </p>
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
+                        {sub.statusKegiatan === "KERJA"
+                          ? "Bekerja"
+                          : sub.statusKegiatan === "KULIAH"
+                            ? "Kuliah"
+                            : sub.statusKegiatan === "WIRAUSAHA"
+                              ? "Wirausaha"
+                              : sub.statusKegiatan === "KERJA_KULIAH"
+                                ? "Kerja & Kuliah"
+                                : "Mencari Kerja"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(sub.submittedAt).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
