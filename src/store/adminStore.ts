@@ -65,6 +65,7 @@ export interface AdminSettings {
   npsn: string;
   alamatSekolah: string;
   kontakBkk: string;
+  yearlyTargets?: Record<number, number>;
 }
 
 interface AdminState {
@@ -112,6 +113,9 @@ const DEFAULT_SETTINGS: AdminSettings = {
   npsn: '20603287',
   alamatSekolah: 'Jl. Surya Kencana No. 1, Pamulang Barat, Kec. Pamulang, Kota Tangerang Selatan, Banten 15417',
   kontakBkk: '0812-8889-7762',
+  yearlyTargets: {
+    2025: 250,
+  },
 };
 
 export const useAdminStore = create<AdminState>()((set, get) => ({
@@ -319,9 +323,18 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       },
 
       updateSettings: (updates) => {
-        set((state) => ({
-          settings: { ...state.settings, ...updates },
-        }));
+        set((state) => {
+          const newSettings = { ...state.settings, ...updates };
+          const yr = newSettings.targetYear;
+          const quota = newSettings.targetQuota;
+          const updatedYearly: Record<number, number> = {
+            ...(state.settings.yearlyTargets || {}),
+            ...(updates.yearlyTargets || {}),
+            ...(yr && quota ? { [Number(yr)]: Number(quota) } : {}),
+          };
+          newSettings.yearlyTargets = updatedYearly;
+          return { settings: newSettings };
+        });
       },
 
       resetToDefaultData: () => {

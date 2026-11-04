@@ -38,8 +38,16 @@ export const AdminSettingsTab: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSettings(formData);
-    showToast("Pengaturan sistem dan profil pelaporan berhasil disimpan.");
+    updateSettings({
+      ...formData,
+      yearlyTargets: {
+        ...(settings.yearlyTargets || {}),
+        [Number(formData.targetYear)]: Number(formData.targetQuota),
+      },
+    });
+    showToast(
+      `Pengaturan dan target Angkatan ${formData.targetYear} berhasil disimpan.`,
+    );
   };
 
   const handleConfirmReset = () => {
@@ -103,7 +111,7 @@ export const AdminSettingsTab: React.FC = () => {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-[#0d2346] focus:ring-2 focus:ring-[#0d2346]/10 focus:outline-none transition bg-slate-50/50 focus:bg-white"
                   />
                   <span className="text-[10px] text-slate-400 block">
-                    Dasar perhitungan persentase partisipasi tracer study.
+                    Dasar perhitungan target partisipasi untuk Angkatan {formData.targetYear}.
                   </span>
                 </div>
 
@@ -114,12 +122,15 @@ export const AdminSettingsTab: React.FC = () => {
                   <input
                     type="number"
                     value={formData.targetYear}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        targetYear: Number(e.target.value),
-                      })
-                    }
+                    onChange={(e) => {
+                      const newYear = Number(e.target.value);
+                      const savedTarget = settings.yearlyTargets?.[newYear];
+                      setFormData((prev) => ({
+                        ...prev,
+                        targetYear: newYear,
+                        ...(savedTarget ? { targetQuota: savedTarget } : {}),
+                      }));
+                    }}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-[#0d2346] focus:ring-2 focus:ring-[#0d2346]/10 focus:outline-none transition bg-slate-50/50 focus:bg-white"
                   />
                   <span className="text-[10px] text-slate-400 block">

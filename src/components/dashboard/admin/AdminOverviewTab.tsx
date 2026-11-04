@@ -222,18 +222,34 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   ).length;
 
   const targetQuota = useMemo(() => {
-    if (!isAllYears && Number(selectedYear) === settings.targetYear) {
-      return settings.targetQuota || totalMaster || 250;
-    }
     if (isAllYears) {
       return masterAlumni.length > 0
         ? masterAlumni.length
         : settings.targetQuota || 250;
     }
-    return totalMaster > 0 ? totalMaster : 0;
+
+    const yr = Number(selectedYear);
+    // 1. Ambil target spesifik tahun tersebut dari yearlyTargets di pengaturan
+    if (settings.yearlyTargets && settings.yearlyTargets[yr]) {
+      return settings.yearlyTargets[yr];
+    }
+
+    // 2. Jika sama dengan tahun sasaran aktif di settings
+    if (yr === settings.targetYear && settings.targetQuota) {
+      return settings.targetQuota;
+    }
+
+    // 3. Jika ada data master pokok alumni tahun tersebut, gunakan totalMaster
+    if (totalMaster > 0) {
+      return totalMaster;
+    }
+
+    // 4. Default fallback
+    return settings.targetQuota || 250;
   }, [
     isAllYears,
     selectedYear,
+    settings.yearlyTargets,
     settings.targetYear,
     settings.targetQuota,
     totalMaster,
@@ -309,7 +325,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-[#0d2346] text-white rounded-t-md p-6 sm:p-7 border border-[#163868] shadow-sm relative overflow-hidden">
+      <div className="bg-[#0d2346] text-white rounded-t-md p-6 sm:p-7 border border-[#163868] shadow-sm relative z-20">
         <div className="relative z-10 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
@@ -367,7 +383,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 text-slate-300 transition-transform duration-200 shrink-0",
-                      isYearDropdownOpen && "rotate-180 text-white"
+                      isYearDropdownOpen && "rotate-180 text-white",
                     )}
                   />
                 </button>
@@ -377,7 +393,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
                     role="listbox"
                     className="absolute right-0 top-full mt-2 z-50 min-w-[190px] bg-white rounded-xl border border-slate-200 shadow-2xl py-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
                   >
-                    <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <div className="px-3.5 py-1.5 text-[10px] font-medium text-slate-400 tracking-wider border-b border-slate-100">
                       Pilih Angkatan
                     </div>
                     <button
@@ -391,8 +407,8 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
                       className={cn(
                         "w-full px-3.5 py-2 text-left text-xs sm:text-sm flex items-center justify-between transition-colors cursor-pointer",
                         isAllYears
-                          ? "bg-slate-100 text-[#0d2346] font-bold"
-                          : "text-slate-700 hover:bg-slate-50 hover:text-[#0d2346] font-medium"
+                          ? "bg-slate-100 text-[#0d2346] font-medium"
+                          : "text-slate-700 hover:bg-slate-50 hover:text-[#0d2346] font-medium",
                       )}
                     >
                       <span>Semua Angkatan</span>
@@ -416,7 +432,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
                             "w-full px-3.5 py-2 text-left text-xs sm:text-sm flex items-center justify-between transition-colors cursor-pointer",
                             isSelected
                               ? "bg-slate-100 text-[#0d2346] font-bold"
-                              : "text-slate-700 hover:bg-slate-50 hover:text-[#0d2346] font-medium"
+                              : "text-slate-700 hover:bg-slate-50 hover:text-[#0d2346] font-medium",
                           )}
                         >
                           <span>Angkatan {yr}</span>
