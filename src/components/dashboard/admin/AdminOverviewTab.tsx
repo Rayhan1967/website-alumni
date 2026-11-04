@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Check,
+  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -320,6 +321,157 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     };
   });
 
+  // Interactive Activity Chart State
+  const [activityChartMode, setActivityChartMode] = useState<"pilar" | "detail">("pilar");
+  const [hoveredActivityKey, setHoveredActivityKey] = useState<string | null>(null);
+
+  // Perhitungan Distribusi Aktivitas Lulusan (Eksklusif & Dinamis)
+  const totalRespondentsCount = filteredRespondents.length;
+
+  const activityDistribution = useMemo(() => {
+    const total = filteredRespondents.length;
+
+    // 1. Pilar Utama (BKK)
+    const kerjaCount = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "KERJA" || r.statusKegiatan === "KERJA_KULIAH",
+    ).length;
+    const usahaCount = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "WIRAUSAHA" || r.statusKegiatan === "WIRAUSAHA_KULIAH",
+    ).length;
+    const kuliahCount = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "KULIAH",
+    ).length;
+    const belumCount = filteredRespondents.filter(
+      (r) => r.statusKegiatan === "BELUM_KERJA" || r.statusKegiatan === "LAINNYA",
+    ).length;
+
+    const pilarItems = [
+      {
+        key: "KERJA",
+        name: "Bekerja",
+        subNote: "Termasuk kerja sambil kuliah",
+        count: kerjaCount,
+        percent: total > 0 ? parseFloat(((kerjaCount / total) * 100).toFixed(1)) : 0,
+        color: "#0d2346",
+      },
+      {
+        key: "WIRAUSAHA",
+        name: "Wirausaha",
+        subNote: "Wirausaha mandiri & kemitraan",
+        count: usahaCount,
+        percent: total > 0 ? parseFloat(((usahaCount / total) * 100).toFixed(1)) : 0,
+        color: "#059669",
+      },
+      {
+        key: "KULIAH",
+        name: "Melanjutkan Kuliah",
+        subNote: "Pendidikan tinggi vokasi/akademik",
+        count: kuliahCount,
+        percent: total > 0 ? parseFloat(((kuliahCount / total) * 100).toFixed(1)) : 0,
+        color: "#2563eb",
+      },
+      {
+        key: "BELUM_KERJA",
+        name: "Mencari Kerja",
+        subNote: "Masa tunggu / pencarian aktif",
+        count: belumCount,
+        percent: total > 0 ? parseFloat(((belumCount / total) * 100).toFixed(1)) : 0,
+        color: "#94a3b8",
+      },
+    ].filter((item) => item.count > 0 || total === 0);
+
+    // 2. Detail Granular Sub-Kategori
+    const countKerjaKuliah = filteredRespondents.filter((r) => r.statusKegiatan === "KERJA_KULIAH").length;
+    const countKerjaMurni = filteredRespondents.filter((r) => r.statusKegiatan === "KERJA").length;
+    const countUsahaMurni = filteredRespondents.filter((r) => r.statusKegiatan === "WIRAUSAHA").length;
+    const countUsahaKuliah = filteredRespondents.filter((r) => r.statusKegiatan === "WIRAUSAHA_KULIAH").length;
+    const countKuliahOnly = filteredRespondents.filter((r) => r.statusKegiatan === "KULIAH").length;
+    const countMencari = filteredRespondents.filter((r) => r.statusKegiatan === "BELUM_KERJA" || r.statusKegiatan === "LAINNYA").length;
+
+    const detailItems = [
+      {
+        key: "KERJA_KULIAH",
+        name: "Kerja & Kuliah",
+        subNote: "Bekerja sekaligus studi",
+        count: countKerjaKuliah,
+        percent: total > 0 ? parseFloat(((countKerjaKuliah / total) * 100).toFixed(1)) : 0,
+        color: "#1e40af",
+      },
+      {
+        key: "KERJA",
+        name: "Bekerja Murni",
+        subNote: "Karyawan / teknisi industri",
+        count: countKerjaMurni,
+        percent: total > 0 ? parseFloat(((countKerjaMurni / total) * 100).toFixed(1)) : 0,
+        color: "#0d2346",
+      },
+      {
+        key: "WIRAUSAHA",
+        name: "Wirausaha Mandiri",
+        subNote: "Usaha sendiri / freelance",
+        count: countUsahaMurni,
+        percent: total > 0 ? parseFloat(((countUsahaMurni / total) * 100).toFixed(1)) : 0,
+        color: "#059669",
+      },
+      {
+        key: "WIRAUSAHA_KULIAH",
+        name: "Wirausaha & Kuliah",
+        subNote: "Wirausaha sambil kuliah",
+        count: countUsahaKuliah,
+        percent: total > 0 ? parseFloat(((countUsahaKuliah / total) * 100).toFixed(1)) : 0,
+        color: "#0d9488",
+      },
+      {
+        key: "KULIAH",
+        name: "Kuliah Murni",
+        subNote: "Fokus studi perguruan tinggi",
+        count: countKuliahOnly,
+        percent: total > 0 ? parseFloat(((countKuliahOnly / total) * 100).toFixed(1)) : 0,
+        color: "#3b82f6",
+      },
+      {
+        key: "BELUM_KERJA",
+        name: "Mencari Kerja",
+        subNote: "Sedang proses melamar",
+        count: countMencari,
+        percent: total > 0 ? parseFloat(((countMencari / total) * 100).toFixed(1)) : 0,
+        color: "#94a3b8",
+      },
+    ].filter((item) => item.count > 0 || total === 0);
+
+    return {
+      total,
+      pilarItems,
+      detailItems,
+    };
+  }, [filteredRespondents]);
+
+  const currentChartItems =
+    activityChartMode === "pilar"
+      ? activityDistribution.pilarItems
+      : activityDistribution.detailItems;
+
+  const chartSegments = useMemo(() => {
+    const circumference = 251.327;
+    let accPercent = 0;
+    return currentChartItems.map((item) => {
+      const strokeDashoffset =
+        circumference - (circumference * item.percent) / 100;
+      const rotation = accPercent * 3.6 - 90;
+      accPercent += item.percent;
+      return {
+        ...item,
+        strokeDashoffset,
+        rotation,
+      };
+    });
+  }, [currentChartItems]);
+
+  const activeHoveredItem = useMemo(() => {
+    if (!hoveredActivityKey) return null;
+    return currentChartItems.find((i) => i.key === hoveredActivityKey) || null;
+  }, [hoveredActivityKey, currentChartItems]);
+
   const recentSubmissions = filteredRespondents.slice(0, 5);
 
   return (
@@ -533,75 +685,132 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         </div>
 
         {/* Card 4: Aktivitas Lulusan */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
-              Aktivitas Lulusan
-            </span>
-            <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
-              <SolidBriefcaseIcon className="w-4 h-4 text-[#0d2346]" />
-            </div>
-          </div>
-          <div className="mt-2.5 space-y-1 text-xs">
-            <div className="flex items-center justify-between text-slate-700">
-              <span>Bekerja</span>
-              <span className="font-bold text-slate-900">
-                {countKerja} Siswa
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-500">
+                Aktivitas Lulusan
               </span>
+              <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
+                <SolidBriefcaseIcon className="w-4 h-4 text-[#0d2346]" />
+              </div>
             </div>
-            <div className="flex items-center justify-between text-slate-700">
-              <span>Melanjutkan Kuliah</span>
-              <span className="font-bold text-slate-900">
-                {countKuliahMurni} Siswa
-              </span>
+
+            {/* Interactive Mini Segmented Bar */}
+            <div
+              className="w-full h-2 bg-slate-100 rounded-full mt-3 mb-2.5 flex overflow-hidden gap-0.5"
+              aria-label="Distribusi aktivitas lulusan"
+            >
+              {totalRespondentsCount > 0 ? (
+                <>
+                  <div
+                    style={{
+                      width: `${(countKerja / totalRespondentsCount) * 100}%`,
+                    }}
+                    className="h-full bg-[#0d2346] transition-all duration-300 hover:opacity-85"
+                    title={`Bekerja: ${countKerja} Siswa (${((countKerja / totalRespondentsCount) * 100).toFixed(1)}%)`}
+                  />
+                  <div
+                    style={{
+                      width: `${(countWirausaha / totalRespondentsCount) * 100}%`,
+                    }}
+                    className="h-full bg-emerald-600 transition-all duration-300 hover:opacity-85"
+                    title={`Wirausaha: ${countWirausaha} Siswa (${((countWirausaha / totalRespondentsCount) * 100).toFixed(1)}%)`}
+                  />
+                  <div
+                    style={{
+                      width: `${(countKuliahMurni / totalRespondentsCount) * 100}%`,
+                    }}
+                    className="h-full bg-blue-600 transition-all duration-300 hover:opacity-85"
+                    title={`Melanjutkan Kuliah: ${countKuliahMurni} Siswa (${((countKuliahMurni / totalRespondentsCount) * 100).toFixed(1)}%)`}
+                  />
+                  {countBelumKerja > 0 && (
+                    <div
+                      style={{
+                        width: `${(countBelumKerja / totalRespondentsCount) * 100}%`,
+                      }}
+                      className="h-full bg-slate-400 transition-all duration-300 hover:opacity-85"
+                      title={`Mencari Kerja: ${countBelumKerja} Siswa (${((countBelumKerja / totalRespondentsCount) * 100).toFixed(1)}%)`}
+                    />
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-full bg-slate-200" />
+              )}
             </div>
-            <div className="flex items-center justify-between text-slate-700">
-              <span>Wirausaha</span>
-              <span className="font-bold text-slate-900">
-                {countWirausaha} Siswa
-              </span>
+
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#0d2346] shrink-0" />
+                  <span>Bekerja</span>
+                </span>
+                <span className="font-bold text-slate-900">
+                  {countKerja} Siswa
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                  <span>Melanjutkan Kuliah</span>
+                </span>
+                <span className="font-bold text-slate-900">
+                  {countKuliahMurni} Siswa
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
+                  <span>Wirausaha</span>
+                </span>
+                <span className="font-bold text-slate-900">
+                  {countWirausaha} Siswa
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Program Keahlian Breakdown & Recent Submissions */}
+      {/* Visual Analytics Grid: 2 Kolom Seimbang (lg:grid-cols-12) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 7 cols: Partisipasi per Program Keahlian */}
-        <div className="lg:col-span-7 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="font-bold text-sm sm:text-base text-slate-900">
-                Pengisian per Program Keahlian
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Jumlah data kuesioner yang telah terisi pada setiap jurusan
-              </p>
-            </div>
-            <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
-              {isAllYears ? "Semua Angkatan" : `Angkatan ${selectedYear}`}
-            </span>
-          </div>
-
-          <div className="space-y-4 pt-1">
-            {jurusanStats.map((item) => (
-              <div key={item.code} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-800 mb-1.5">
-                    {item.name}
-                  </span>
-                  <span className="font-light text-slate-700">
-                    {item.filled} dari {item.total} Siswa ({item.percent}%)
-                  </span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-700 rounded-full transition-all duration-300"
-                    style={{ width: `${Math.min(item.percent, 100)}%` }}
-                  />
-                </div>
+        {/* Left 6 cols: Partisipasi per Program Keahlian */}
+        <div className="lg:col-span-6 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                  Pengisian per Program Keahlian
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Jumlah data kuesioner yang telah terisi pada setiap jurusan
+                </p>
               </div>
-            ))}
+              <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold">
+                {isAllYears ? "Semua Angkatan" : `Angkatan ${selectedYear}`}
+              </span>
+            </div>
+
+            <div className="space-y-4 pt-3">
+              {jurusanStats.map((item) => (
+                <div key={item.code} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-800">
+                      {item.name}
+                    </span>
+                    <span className="font-light text-slate-700">
+                      {item.filled} dari {item.total} Siswa ({item.percent}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-700 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(item.percent, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
@@ -615,85 +824,280 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
           </div>
         </div>
 
-        {/* Right 5 cols: Kuesioner Masuk Terbaru */}
-        <div className="lg:col-span-5 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4">
+        {/* Right 6 cols: Distribusi Aktivitas & Keterserapan Lulusan */}
+        <div className="lg:col-span-6 bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            {/* Header with Mode Toggle */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
               <div>
-                <h3 className="font-bold text-sm sm:text-base text-slate-900">
-                  Kuesioner Masuk Terbaru
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                  <PieChart className="w-4 h-4 text-[#0d2346]" />
+                  <span>Distribusi Aktivitas Lulusan</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  5 alumni terakhir yang mengirimkan data penelusuran
+                  Komposisi keterserapan alumni berdasarkan data kuesioner
                 </p>
               </div>
-              <button
-                onClick={() => onNavigateTab("verifikasi")}
-                className="text-xs font-semibold text-blue-600 hover:underline"
-              >
-                Lihat Semua
-              </button>
+
+              {/* View Mode Toggle Pill */}
+              <div className="inline-flex p-0.5 bg-slate-100 rounded-lg text-xs self-start sm:self-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivityChartMode("pilar");
+                    setHoveredActivityKey(null);
+                  }}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                    activityChartMode === "pilar"
+                      ? "bg-white text-[#0d2346] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900",
+                  )}
+                >
+                  3 Pilar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivityChartMode("detail");
+                    setHoveredActivityKey(null);
+                  }}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                    activityChartMode === "detail"
+                      ? "bg-white text-[#0d2346] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900",
+                  )}
+                >
+                  Detail
+                </button>
+              </div>
             </div>
 
-            <div className="divide-y divide-slate-100 mt-1">
-              {recentSubmissions.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  Belum ada kuesioner masuk untuk periode ini.
+            {/* Donut Chart & Legend Body */}
+            {activityDistribution.total === 0 ? (
+              <div className="py-12 text-center text-xs text-slate-400">
+                Belum ada data kuesioner masuk untuk periode ini.
+              </div>
+            ) : (
+              <div className="pt-2 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+                {/* SVG Donut Chart (5 cols) */}
+                <div className="sm:col-span-5 flex flex-col items-center justify-center">
+                  <div className="relative w-36 h-36 sm:w-40 sm:h-40">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-full h-full transform transition-all duration-300"
+                    >
+                      {/* Background Track */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="#f1f5f9"
+                        strokeWidth="11"
+                        fill="transparent"
+                      />
+                      {/* Slices */}
+                      {chartSegments.map((segment) => {
+                        const isHovered = hoveredActivityKey === segment.key;
+                        return (
+                          <circle
+                            key={segment.key}
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            stroke={segment.color}
+                            strokeWidth={isHovered ? 14 : 11}
+                            fill="transparent"
+                            strokeDasharray="251.327"
+                            strokeDashoffset={segment.strokeDashoffset}
+                            style={{
+                              transformOrigin: "center",
+                              transform: `rotate(${segment.rotation}deg)`,
+                            }}
+                            strokeLinecap="butt"
+                            className="transition-all duration-300 cursor-pointer"
+                            onMouseEnter={() =>
+                              setHoveredActivityKey(segment.key)
+                            }
+                            onMouseLeave={() => setHoveredActivityKey(null)}
+                          />
+                        );
+                      })}
+                    </svg>
+
+                    {/* Dynamic Central Readout */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-2">
+                      <span className="text-xl sm:text-2xl font-black text-slate-900 leading-none transition-all duration-200">
+                        {activeHoveredItem
+                          ? `${activeHoveredItem.percent}%`
+                          : activityDistribution.total}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-700 mt-1 truncate max-w-[100px]">
+                        {activeHoveredItem
+                          ? activeHoveredItem.name
+                          : "Responden"}
+                      </span>
+                      <span className="text-[9px] text-slate-400 mt-0.5">
+                        {activeHoveredItem
+                          ? `${activeHoveredItem.count} Siswa`
+                          : isAllYears
+                            ? "Semua Angkatan"
+                            : `Angkatan ${selectedYear}`}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-400 mt-2 text-center">
+                    Arahkan kursor pada grafik untuk melihat rincian
+                  </span>
                 </div>
-              ) : (
-                recentSubmissions.map((sub) => (
+
+                {/* Interactive Legend List (7 cols) */}
+                <div className="sm:col-span-7 space-y-1.5">
+                  {currentChartItems.map((item) => {
+                    const isHovered = hoveredActivityKey === item.key;
+                    return (
+                      <div
+                        key={item.key}
+                        onMouseEnter={() => setHoveredActivityKey(item.key)}
+                        onMouseLeave={() => setHoveredActivityKey(null)}
+                        className={cn(
+                          "p-2 rounded-lg transition-all duration-150 cursor-pointer border",
+                          isHovered
+                            ? "bg-slate-50 border-slate-300 shadow-2xs"
+                            : "bg-transparent border-transparent hover:bg-slate-50/70 hover:border-slate-200",
+                        )}
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <div className="min-w-0">
+                              <span className="font-semibold text-slate-800 truncate block">
+                                {item.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 truncate block">
+                                {item.subNote}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 ml-2">
+                            <span className="font-bold text-slate-900 block text-xs">
+                              {item.count} Siswa
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-500">
+                              {item.percent}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <button
+              onClick={() => onNavigateTab("verifikasi")}
+              className="text-[#0d2346] font-semibold hover:underline flex items-center gap-1"
+            >
+              <span>Lihat Detail Isian Responden</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Kuesioner Masuk Terbaru (12 cols) */}
+      <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4">
+        <div>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                Kuesioner Masuk Terbaru
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                5 alumni terakhir yang mengirimkan data penelusuran
+              </p>
+            </div>
+            <button
+              onClick={() => onNavigateTab("verifikasi")}
+              className="text-xs font-semibold text-blue-600 hover:underline"
+            >
+              Lihat Semua
+            </button>
+          </div>
+
+          {/* Desktop Responsive Grid / Mobile List */}
+          <div className="mt-4">
+            {recentSubmissions.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                Belum ada kuesioner masuk untuk periode ini.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {recentSubmissions.map((sub) => (
                   <div
                     key={sub.submissionId}
                     onClick={() =>
                       onOpenRespondentDetail &&
                       onOpenRespondentDetail(sub.submissionId)
                     }
-                    className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 rounded-lg px-2 -mx-2 transition cursor-pointer"
+                    className="p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs hover:bg-slate-50/50 transition cursor-pointer flex flex-col justify-between space-y-2.5"
                   >
-                    <div className="min-w-0">
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
+                          {sub.statusKegiatan === "KERJA"
+                            ? "Bekerja"
+                            : sub.statusKegiatan === "KULIAH"
+                              ? "Kuliah"
+                              : sub.statusKegiatan === "WIRAUSAHA"
+                                ? "Wirausaha"
+                                : sub.statusKegiatan === "KERJA_KULIAH"
+                                  ? "Kerja & Kuliah"
+                                  : "Mencari Kerja"}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(sub.submittedAt).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>
+                      </div>
                       <p className="text-xs font-bold text-slate-900 truncate">
                         {sub.nama}
                       </p>
-                      <p className="text-[11px] text-slate-500 truncate">
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
                         {sub.jurusan}
                       </p>
                     </div>
-                    <div className="shrink-0 flex flex-col items-end">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
-                        {sub.statusKegiatan === "KERJA"
-                          ? "Bekerja"
-                          : sub.statusKegiatan === "KULIAH"
-                            ? "Kuliah"
-                            : sub.statusKegiatan === "WIRAUSAHA"
-                              ? "Wirausaha"
-                              : sub.statusKegiatan === "KERJA_KULIAH"
-                                ? "Kerja & Kuliah"
-                                : "Mencari Kerja"}
-                      </span>
-                      <span className="text-[10px] text-slate-400 mt-0.5">
-                        {new Date(sub.submittedAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </span>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-blue-700 font-medium">
+                      <span>Verifikasi</span>
+                      <ArrowRight className="w-3 h-3" />
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
 
-          <div className="pt-3 border-t border-slate-100 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-xl flex items-center justify-between text-xs">
-            <span className="text-slate-600">
-              Perlu mencetak rekapitulasi data?
-            </span>
-            <button
-              onClick={() => onNavigateTab("laporan")}
-              className="px-3 py-1.5 rounded-full bg-[#0d2346] hover:bg-[#163868] text-white font-semibold transition cursor-pointer"
-            >
-              Buka Laporan
-            </button>
-          </div>
+        <div className="pt-3 border-t border-slate-100 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-xl flex items-center justify-between text-xs">
+          <span className="text-slate-600">
+            Perlu mencetak rekapitulasi data?
+          </span>
+          <button
+            onClick={() => onNavigateTab("laporan")}
+            className="px-3 py-1.5 rounded-full bg-[#0d2346] hover:bg-[#163868] text-white font-semibold transition cursor-pointer"
+          >
+            Buka Laporan
+          </button>
         </div>
       </div>
     </div>
