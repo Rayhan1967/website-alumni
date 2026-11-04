@@ -463,7 +463,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         {/* Card 1: Target Kuota */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs font-medium text-slate-500">
               Target Jumlah Lulusan
             </span>
             <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
@@ -486,7 +486,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         {/* Card 2: Tingkat Pengisian */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs font-medium text-slate-500">
               Tingkat Pengisian
             </span>
             <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
@@ -512,7 +512,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         {/* Card 3: Total Responden Masuk */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs font-medium text-slate-500">
               Total Responden Masuk
             </span>
             <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
@@ -535,7 +535,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
         {/* Card 4: Aktivitas Lulusan */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
+            <span className="text-xs font-medium text-slate-500">
               Aktivitas Lulusan
             </span>
             <div className="w-8 h-8 text-[#0d2346] flex items-center justify-center">
