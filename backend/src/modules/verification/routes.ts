@@ -22,6 +22,14 @@ export async function verificationRoutes(app: FastifyInstance) {
     return reply.send(paginatedResponse(data, page, limit, total, 'Daftar verifikasi berhasil diambil'));
   });
 
+  app.get('/verification/submissions', {
+    preHandler: [authorize('ADMIN_BKK'), validateQuery(listQuerySchema)],
+  }, async (request, reply) => {
+    const query = request.query as ListQuery;
+    const { data, total, page, limit } = await service.listPendingVerifications(query);
+    return reply.send(paginatedResponse(data, page, limit, total, 'Daftar verifikasi berhasil diambil'));
+  });
+
   app.put('/verification/:id', {
     preHandler: [authorize('ADMIN_BKK'), validateParams(idParamSchema), validateBody(updateVerificationSchema)],
   }, async (request, reply) => {

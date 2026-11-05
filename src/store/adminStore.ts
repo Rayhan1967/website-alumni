@@ -335,7 +335,7 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       fetchMasterAlumniFromBackend: async () => {
         try {
           const { adminMasterAlumniApi } = await import('@/services/adminService');
-          const res = await adminMasterAlumniApi.list({ limit: 500 });
+          const res = await adminMasterAlumniApi.list({ limit: 1000 });
           if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
             const mapped: MasterAlumniRecord[] = res.data.map((item: any) => ({
               id: item.id || `mst-${item.nisn}`,
@@ -363,7 +363,7 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       fetchRespondentsFromBackend: async () => {
         try {
           const { adminVerificationApi } = await import('@/services/adminService');
-          const res = await adminVerificationApi.list({ limit: 100 });
+          const res = await adminVerificationApi.list({ limit: 500 });
           if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
             const mapped: RespondentRecord[] = res.data.map((item: any) => {
               const alumni = item.alumni || {};

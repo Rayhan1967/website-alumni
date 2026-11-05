@@ -96,7 +96,7 @@ export type ImportCsvInput = z.infer<typeof importCsvSchema>;
 
 export const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(15),
+  limit: z.coerce.number().int().positive().max(2000).default(15),
   search: z.string().optional(),
   jurusan: z.string().optional(),
   statusTracer: z.enum(['SUDAH', 'BELUM']).optional(),

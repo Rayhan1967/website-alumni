@@ -14,6 +14,7 @@ import {
   ArrowDown,
   Eye,
   FileSpreadsheet,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { CustomSelect } from "@/components/ui/CustomSelect";
@@ -54,8 +55,14 @@ const JURUSAN_OPTIONS = [
 ];
 
 export const AdminMasterAlumniTab: React.FC = () => {
-  const { masterAlumni, deleteMasterAlumni, addSingleMasterAlumni } =
+  const { masterAlumni, deleteMasterAlumni, addSingleMasterAlumni, fetchMasterAlumniFromBackend } =
     useAdminStore();
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    fetchMasterAlumniFromBackend?.();
+  }, []);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "SUDAH" | "BELUM">(
@@ -189,6 +196,22 @@ export const AdminMasterAlumniTab: React.FC = () => {
     return false;
   };
 
+  const handleSyncFromDatabase = async () => {
+    setIsSyncing(true);
+    try {
+      const ok = await fetchMasterAlumniFromBackend();
+      if (ok) {
+        showToast("Data siswa alumni berhasil disinkronkan dari database pusat.");
+      } else {
+        showToast("Sinkronisasi selesai (data telah mutakhir).");
+      }
+    } catch {
+      showToast("Gagal menyinkronkan data dari database.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <>
       <div className="space-y-5">
@@ -202,6 +225,16 @@ export const AdminMasterAlumniTab: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <button
+              type="button"
+              onClick={handleSyncFromDatabase}
+              disabled={isSyncing}
+              className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 transition flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+              title="Sinkronkan data siswa langsung dari database pusat"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+              <span>{isSyncing ? "Menyinkronkan..." : "Sinkron Database"}</span>
+            </button>
             <button
               type="button"
               onClick={handleExportExcel}

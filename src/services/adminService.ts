@@ -726,6 +726,12 @@ export async function syncDashboardData(): Promise<DashboardSyncResult> {
   const adminState = useAdminStore.getState();
 
   try {
+    await adminState.syncAllFromBackend?.();
+  } catch (err) {
+    console.warn('[Sync] syncAllFromBackend failed:', err);
+  }
+
+  try {
     const statsRes = await adminReportsApi.getDashboardStats();
     if (statsRes?.data) {
       const d = statsRes.data;
@@ -736,10 +742,10 @@ export async function syncDashboardData(): Promise<DashboardSyncResult> {
         totalSubmitted: d.totalSubmissions || 0,
         targetQuota: adminState.settings.targetQuota || 250,
         responseRate: `${(d.responseRate || 0).toFixed(1)}%`,
-        countKerja: d.bmw?.kerja || 0,
-        countKuliah: d.bmw?.kuliah || 0,
-        countWirausaha: d.bmw?.wirausaha || 0,
-        countBelumKerja: d.bmw?.belumKerja || 0,
+        countKerja: (d.bmw?.KERJA || 0) + (d.bmw?.KERJA_KULIAH || 0) + (d.bmw?.kerja || 0),
+        countKuliah: (d.bmw?.KULIAH || 0) + (d.bmw?.kuliah || 0),
+        countWirausaha: (d.bmw?.WIRAUSAHA || 0) + (d.bmw?.wirausaha || 0),
+        countBelumKerja: (d.bmw?.BELUM_KERJA || 0) + (d.bmw?.belumKerja || 0),
         lastSyncAt: new Date().toLocaleTimeString('id-ID'),
       };
     }
