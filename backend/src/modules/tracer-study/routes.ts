@@ -22,15 +22,6 @@ export async function publicTracerStudyRoutes(app: FastifyInstance) {
 }
 
 export async function tracerStudyRoutes(app: FastifyInstance) {
-  // Fallback handler jika masuk ke protected scope
-  app.post('/tracer-study', {
-    preHandler: [validateBody(tracerSubmitSchema)],
-  }, async (request, reply) => {
-    const body = request.body as SubmitBody;
-    const result = await service.submitTracer(request.user?.id, body);
-    return reply.status(201).send(successResponse(result, 'Tracer study berhasil dikirim'));
-  });
-
   app.get('/tracer-study/me', { preHandler: authenticate }, async (request, reply) => {
     const submission = await service.getMySubmission(request.user!.id);
     return reply.send(successResponse(submission, 'Riwayat tracer study berhasil diambil'));
