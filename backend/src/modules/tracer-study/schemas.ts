@@ -80,7 +80,7 @@ export const tracerSubmitSchema = z.object({
   detail_kuliah: detailKuliahSchema.nullable().optional(),
   detail_usaha: detailUsahaSchema.nullable().optional(),
   evaluasi: evaluasiSchema,
-  agreement: z.literal(true, { errorMap: () => ({ message: 'Harus menyetujui pernyataan' }) }),
+  agreement: z.literal(true, { error: 'Harus menyetujui pernyataan' }),
 });
 
 export type TracerSubmitInput = z.infer<typeof tracerSubmitSchema>;
