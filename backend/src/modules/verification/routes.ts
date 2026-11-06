@@ -8,6 +8,24 @@ import { z } from 'zod';
 
 type ListQuery = z.infer<typeof listQuerySchema>;
 
+export async function publicVerificationRoutes(app: FastifyInstance) {
+  app.get('/public/verification', {
+    preHandler: validateQuery(listQuerySchema),
+  }, async (request, reply) => {
+    const query = request.query as ListQuery;
+    const { data, total, page, limit } = await service.listPendingVerifications(query);
+    return reply.send(paginatedResponse(data, page, limit, total, 'Daftar verifikasi berhasil diambil'));
+  });
+
+  app.get('/public/submissions', {
+    preHandler: validateQuery(listQuerySchema),
+  }, async (request, reply) => {
+    const query = request.query as ListQuery;
+    const { data, total, page, limit } = await service.listPendingVerifications(query);
+    return reply.send(paginatedResponse(data, page, limit, total, 'Daftar verifikasi berhasil diambil'));
+  });
+}
+
 export async function verificationRoutes(app: FastifyInstance) {
   app.get('/verification/stats', { preHandler: authorize('ADMIN_BKK') }, async (request, reply) => {
     const stats = await service.getVerificationStats();

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { authRoutes } from './auth/routes.js';
 import { masterAlumniRoutes, publicMasterAlumniRoutes } from './master-alumni/routes.js';
 import { tracerStudyRoutes } from './tracer-study/routes.js';
-import { verificationRoutes } from './verification/routes.js';
+import { publicVerificationRoutes, verificationRoutes } from './verification/routes.js';
 import { jobsRoutes, publicJobsRoutes } from './jobs/routes.js';
 import { newsRoutes, publicNewsRoutes } from './news/routes.js';
 import { messagesRoutes, publicMessagesRoutes } from './messages/routes.js';
@@ -21,6 +21,7 @@ export async function routes(app: FastifyInstance) {
 
   // Public routes (no auth required)
   await app.register(publicMasterAlumniRoutes);
+  await app.register(publicVerificationRoutes);
   await app.register(publicJobsRoutes);
   await app.register(publicNewsRoutes);
   await app.register(publicMessagesRoutes);

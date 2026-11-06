@@ -157,20 +157,39 @@ export const useContentStore = create<ContentState>()(
         set({ newsFetchError: null });
         try {
           const { adminNewsApi } = await import('@/services/adminService');
-          const res = await adminNewsApi.list({ limit: 50 });
-          if (res && res.data && Array.isArray(res.data)) {
-            const mapped: NewsItem[] = res.data.map((item: any) => ({
-              id: item.id,
-              title: item.title,
-              excerpt: item.excerpt,
-              content: item.content,
-              category: item.category,
-              date: typeof item.date === 'string' ? item.date.split('T')[0] : '2026-10-01',
-              readTime: item.readTime || '3 min baca',
-              imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-              author: item.author || 'Tim BKK Sasmita',
-              slug: item.slug || item.id,
-            }));
+          let res: any = null;
+          try {
+            res = await adminNewsApi.list({ limit: 100 });
+          } catch {
+            res = await adminNewsApi.listPublic({ limit: 100 });
+          }
+          if ((!res || !res.data || !Array.isArray(res.data) || res.data.length === 0) && adminNewsApi.listPublic) {
+            res = await adminNewsApi.listPublic({ limit: 100 });
+          }
+          if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+            const mapped: NewsItem[] = res.data.map((item: any) => {
+              let displayDate = '2026-10-01';
+              if (item.date) {
+                try {
+                  const d = new Date(item.date);
+                  displayDate = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                } catch {
+                  displayDate = String(item.date).split('T')[0];
+                }
+              }
+              return {
+                id: item.id,
+                title: item.title,
+                excerpt: item.excerpt,
+                content: item.content,
+                category: item.category,
+                date: displayDate,
+                readTime: item.readTime || '3 min baca',
+                imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+                author: item.author || 'Tim BKK Sasmita',
+                slug: item.slug || item.id,
+              };
+            });
             set({ newsList: mapped });
             return true;
           }

@@ -368,7 +368,15 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       fetchRespondentsFromBackend: async () => {
         try {
           const { adminVerificationApi } = await import('@/services/adminService');
-          const res = await adminVerificationApi.list({ limit: 500 });
+          let res: any = null;
+          try {
+            res = await adminVerificationApi.list({ limit: 1000 });
+          } catch {
+            res = await adminVerificationApi.listPublic({ limit: 1000 });
+          }
+          if ((!res || !res.data || !Array.isArray(res.data) || res.data.length === 0) && adminVerificationApi.listPublic) {
+            res = await adminVerificationApi.listPublic({ limit: 1000 });
+          }
           if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
             const mapped: RespondentRecord[] = res.data.map((item: any) => {
               const alumni = item.alumni || {};

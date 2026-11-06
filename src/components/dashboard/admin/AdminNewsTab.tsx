@@ -11,6 +11,7 @@ import {
   User,
   CheckCircle2,
   ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { CustomSelect } from "@/components/ui/CustomSelect";
@@ -32,8 +33,9 @@ const SolidNewspaperIcon: React.FC<{ className?: string }> = ({
 );
 
 export const AdminNewsTab: React.FC = () => {
-  const { newsList, addNews, updateNews, deleteNews } = useContentStore();
+  const { newsList, addNews, updateNews, deleteNews, fetchNewsFromBackend } = useContentStore();
 
+  const [isSyncing, setIsSyncing] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "editor">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua");
@@ -48,6 +50,26 @@ export const AdminNewsTab: React.FC = () => {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 3500);
+  };
+
+  useEffect(() => {
+    fetchNewsFromBackend?.();
+  }, []);
+
+  const handleSyncFromDatabase = async () => {
+    setIsSyncing(true);
+    try {
+      const ok = await fetchNewsFromBackend();
+      if (ok) {
+        showToast("Daftar berita berhasil disinkronkan dari database pusat.");
+      } else {
+        showToast("Sinkronisasi selesai (data berita telah mutakhir).");
+      }
+    } catch {
+      showToast("Gagal menyinkronkan berita dari database.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleOpenEditor = (news: NewsItem | null) => {
@@ -144,14 +166,27 @@ export const AdminNewsTab: React.FC = () => {
               </h1>
             </div>
 
-            <button
-              type="button"
-              onClick={() => handleOpenEditor(null)}
-              className="px-4 py-2 rounded-full bg-[#0d2346] hover:bg-[#163868] text-white text-xs font-semibold shadow-xs transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Buat Berita Baru</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={handleSyncFromDatabase}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-60 transition cursor-pointer shadow-xs"
+                title="Ambil data berita terbaru dari database"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-600" : "text-slate-500"}`} />
+                <span>{isSyncing ? "Menyinkronkan..." : "Sinkron Database"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenEditor(null)}
+                className="px-4 py-2 rounded-full bg-[#0d2346] hover:bg-[#163868] text-white text-xs font-semibold shadow-xs transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Buat Berita Baru</span>
+              </button>
+            </div>
           </div>
 
           {/* Statistics Cards */}

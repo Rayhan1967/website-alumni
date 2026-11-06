@@ -326,6 +326,30 @@ export const adminVerificationApi = {
     return fetchWithAuth<ApiResponse<any[]>>(`/api/v1/verification${queryString}`);
   },
 
+  async listPublic(params?: {
+    page?: number;
+    limit?: number;
+    verificationStatus?: VerificationStatus;
+    statusKegiatan?: string;
+    search?: string;
+    sortBy?: 'submittedAt' | 'submissionId';
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.verificationStatus && params.verificationStatus !== 'ALL' as any) query.append('verificationStatus', params.verificationStatus);
+    if (params?.statusKegiatan && params.statusKegiatan !== 'ALL') query.append('statusKegiatan', params.statusKegiatan);
+    if (params?.search) query.append('search', params.search);
+    if (params?.sortBy) query.append('sortBy', params.sortBy);
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
+
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    const base = API_BASE || '';
+    const res = await fetch(`${base}/api/v1/public/verification${queryString}`);
+    return await res.json();
+  },
+
   async updateStatus(submissionIdOrId: string, status: VerificationStatus, note?: string) {
     return fetchWithAuth<ApiResponse<any>>(`/api/v1/verification/${submissionIdOrId}`, {
       method: 'PUT',
@@ -371,6 +395,28 @@ export const adminNewsApi = {
 
     const queryString = query.toString() ? `?${query.toString()}` : '';
     return fetchWithAuth<ApiResponse<any[]>>(`/api/v1/news${queryString}`);
+  },
+
+  async listPublic(params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.category && params.category !== 'Semua') query.append('category', params.category);
+    if (params?.search) query.append('search', params.search);
+    if (params?.sortBy) query.append('sortBy', params.sortBy);
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
+
+    const queryString = query.toString() ? `?${query.toString()}` : '';
+    const base = API_BASE || '';
+    const res = await fetch(`${base}/api/v1/public/news${queryString}`);
+    return await res.json();
   },
 
   async getById(id: string) {

@@ -20,7 +20,7 @@ export type NewsUpdateInput = z.infer<typeof newsUpdateSchema>;
 
 export const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(10),
+  limit: z.coerce.number().int().positive().max(500).default(10),
   category: z.string().optional(),
   isPublished: z.coerce.boolean().optional(),
   search: z.string().optional(),

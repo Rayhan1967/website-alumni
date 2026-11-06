@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   useAdminStore,
   RespondentRecord,
@@ -14,10 +14,12 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Pagination } from "@/components/ui/Pagination";
+import { Toast } from "@/components/ui/Toast";
 
 const SolidFileCheckIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5 text-[#0d2346]" }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -71,7 +73,35 @@ export const AdminRespondentsTab: React.FC<AdminRespondentsTabProps> = ({
   initialSelectedId,
   onClearInitialSelectedId,
 }) => {
-  const { respondents } = useAdminStore();
+  const { respondents, fetchRespondentsFromBackend } = useAdminStore();
+
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 3500);
+  };
+
+  useEffect(() => {
+    fetchRespondentsFromBackend?.();
+  }, []);
+
+  const handleSyncFromDatabase = async () => {
+    setIsSyncing(true);
+    try {
+      const ok = await fetchRespondentsFromBackend();
+      if (ok) {
+        showToast("Data responden kuesioner berhasil disinkronkan dari database pusat.");
+      } else {
+        showToast("Sinkronisasi selesai (data telah mutakhir).");
+      }
+    } catch {
+      showToast("Gagal menyinkronkan data responden dari database.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const [search, setSearch] = useState("");
   const [jurusanFilter, setJurusanFilter] = useState("ALL");
@@ -255,8 +285,20 @@ export const AdminRespondentsTab: React.FC<AdminRespondentsTabProps> = ({
             Daftar hasil pengisian kuesioner penelusuran tamatan yang tersimpan langsung di dalam sistem.
           </p>
         </div>
-        <div className="text-xs text-slate-600 font-medium bg-slate-50 px-3.5 py-1.5 rounded-lg border border-slate-200 shrink-0">
-          Total Masuk: <span className="font-bold text-slate-900">{respondents.length} Responden</span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleSyncFromDatabase}
+            disabled={isSyncing}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-60 transition cursor-pointer shadow-xs"
+            title="Ambil data responden terbaru dari database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-600" : "text-slate-500"}`} />
+            <span>{isSyncing ? "Menyinkronkan..." : "Sinkron Database"}</span>
+          </button>
+          <div className="text-xs text-slate-600 font-medium bg-slate-50 px-3.5 py-1.5 rounded-lg border border-slate-200 shrink-0">
+            Total Masuk: <span className="font-bold text-slate-900">{respondents.length} Responden</span>
+          </div>
         </div>
       </div>
 
@@ -511,6 +553,8 @@ export const AdminRespondentsTab: React.FC<AdminRespondentsTabProps> = ({
           onClearInitialSelectedId?.();
         }}
       />
+
+      <Toast message={toastMessage} onClose={() => setToastMessage("")} />
     </div>
   );
 };
