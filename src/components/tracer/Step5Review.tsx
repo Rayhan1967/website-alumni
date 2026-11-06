@@ -96,10 +96,16 @@ export const Step5Review: React.FC<Step5Props> = ({ onPrev, onSuccess }) => {
 
         onSuccess(response.data.submission_id);
       } else {
-        setSubmitError(
-          response.message ||
-            "Terjadi kesalahan saat memproses data. Silakan periksa kembali formulir Anda.",
-        );
+        let msg = response.message || "Terjadi kesalahan saat memproses data. Silakan periksa kembali formulir Anda.";
+        if (response.errors && typeof response.errors === 'object') {
+          const detail = Object.entries(response.errors)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+            .join(' • ');
+          if (detail) {
+            msg = `${msg} (${detail})`;
+          }
+        }
+        setSubmitError(msg);
       }
     } catch (err: any) {
       setSubmitError(

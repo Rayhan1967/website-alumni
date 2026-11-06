@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { authenticate, authorize } from '../../core/middleware/auth.js';
+import { authenticate, authorize, optionalAuth } from '../../core/middleware/auth.js';
 import { validateBody, validateQuery, validateParams } from '../../core/middleware/validate.js';
 import { tracerSubmitSchema, listQuerySchema, idParamSchema, submissionIdParamSchema } from './schemas.js';
 import * as service from './service.js';
@@ -9,12 +9,25 @@ import { z } from 'zod';
 type ListQuery = z.infer<typeof listQuerySchema>;
 type SubmitBody = z.infer<typeof tracerSubmitSchema>;
 
-export async function tracerStudyRoutes(app: FastifyInstance) {
+export async function publicTracerStudyRoutes(app: FastifyInstance) {
+  // POST /tracer-study bisa diakses baik dengan token (alumni login) maupun public dengan identitas NISN
   app.post('/tracer-study', {
-    preHandler: [authenticate, validateBody(tracerSubmitSchema)],
+    preHandler: [optionalAuth, validateBody(tracerSubmitSchema)],
   }, async (request, reply) => {
     const body = request.body as SubmitBody;
-    const result = await service.submitTracer(request.user!.id, body);
+    const userId = request.user?.id;
+    const result = await service.submitTracer(userId, body);
+    return reply.status(201).send(successResponse(result, 'Tracer study berhasil dikirim'));
+  });
+}
+
+export async function tracerStudyRoutes(app: FastifyInstance) {
+  // Fallback handler jika masuk ke protected scope
+  app.post('/tracer-study', {
+    preHandler: [validateBody(tracerSubmitSchema)],
+  }, async (request, reply) => {
+    const body = request.body as SubmitBody;
+    const result = await service.submitTracer(request.user?.id, body);
     return reply.status(201).send(successResponse(result, 'Tracer study berhasil dikirim'));
   });
 

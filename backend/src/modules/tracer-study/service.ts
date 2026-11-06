@@ -1,8 +1,8 @@
 import { prisma } from '../../config/prisma.js';
 import { HttpError } from '../../core/utils/errors.js';
+import { hashPassword } from '../../core/utils/password.js';
 import { TracerSubmitInput, ListQueryInput } from './schemas.js';
-import { StatusKegiatan } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import { StatusKegiatan, Prisma } from '@prisma/client';
 
 function generateSubmissionCode(): string {
   const now = new Date();
@@ -12,30 +12,85 @@ function generateSubmissionCode(): string {
   return `${year}${month}${random}`;
 }
 
-export async function submitTracer(userId: string, input: TracerSubmitInput) {
-  const alumni = await prisma.alumni.findUnique({ where: { id: userId } });
-  if (!alumni) throw HttpError.notFound('Alumni tidak ditemukan');
+function normalizeStatusKegiatan(status: string): StatusKegiatan {
+  const map: Record<string, StatusKegiatan> = {
+    KERJA: 'KERJA',
+    KULIAH: 'KULIAH',
+    WIRAUSAHA: 'WIRAUSAHA',
+    KERJA_KULIAH: 'KERJA_KULIAH',
+    WIRAUSAHA_KULIAH: 'WIRAUSAHA_KULIAH',
+    BELUM_KERJA: 'BELUM_KERJA',
+  };
+  return map[status] || 'BELUM_KERJA';
+}
+
+export async function submitTracer(userIdOrNull: string | undefined, input: TracerSubmitInput) {
+  let alumniId = userIdOrNull;
+
+  // Jika userId tidak ada (misal token tidak terkirim), cari alumni dari NISN atau email
+  if (!alumniId && input.identitas?.nisn) {
+    const existingAlumni = await prisma.alumni.findFirst({
+      where: {
+        OR: [
+          { nisn: input.identitas.nisn },
+          ...(input.identitas.email ? [{ email: input.identitas.email }] : []),
+        ],
+      },
+    });
+
+    if (existingAlumni) {
+      alumniId = existingAlumni.id;
+    } else {
+      // Auto-create record alumni baru agar tracer tetap tersimpan di database
+      const defaultPassword = await hashPassword('Alumni#12345');
+      const newAlumni = await prisma.alumni.create({
+        data: {
+          nisn: input.identitas.nisn,
+          namaLengkap: input.identitas.nama_lengkap || 'Alumni Sasmita',
+          email: input.identitas.email || null,
+          passwordHash: defaultPassword,
+          jurusan: input.identitas.jurusan || 'Teknik Komputer dan Jaringan',
+          tahunMasuk: input.identitas.tahun_masuk || 2021,
+          tahunLulus: input.identitas.tahun_lulus || 2024,
+          noWhatsApp: input.identitas.no_whatsapp || null,
+          nik: input.identitas.nik || null,
+          role: 'ALUMNI',
+        },
+      });
+      alumniId = newAlumni.id;
+    }
+  }
+
+  if (!alumniId) {
+    throw HttpError.badRequest('Identitas alumni (NISN) wajib disertakan');
+  }
+
+  const alumni = await prisma.alumni.findUnique({ where: { id: alumniId } });
+  if (!alumni) throw HttpError.notFound('Data alumni tidak ditemukan');
 
   const existing = await prisma.tracerSubmission.findFirst({
-    where: { alumniId: userId },
+    where: { alumniId },
     orderBy: { submittedAt: 'desc' },
   });
 
-  if (existing && existing.verificationStatus !== 'REVISI') {
-    throw HttpError.conflict('Anda sudah mengirimkan kuesioner tracer study');
+  if (existing && existing.verificationStatus === 'VALID') {
+    throw HttpError.conflict('Kuesioner tracer study Anda sudah divalidasi oleh admin dan tidak dapat diubah kembali.');
   }
 
+  const normalizedStatus = normalizeStatusKegiatan(input.status_kegiatan);
+
   const submission = await prisma.$transaction(async (tx) => {
-    if (existing && existing.verificationStatus === 'REVISI') {
+    // Jika sudah ada dan masih PENDING / REVISI, update submission tersebut
+    if (existing) {
       const sub = await tx.tracerSubmission.update({
         where: { id: existing.id },
         data: {
-          statusKegiatan: input.status_kegiatan as StatusKegiatan,
+          statusKegiatan: normalizedStatus,
           masaTunggu: input.masa_tunggu ?? null,
-          detailKerja: input.detail_kerja ?? Prisma.JsonNull,
-          detailKuliah: input.detail_kuliah ?? Prisma.JsonNull,
-          detailUsaha: input.detail_usaha ?? Prisma.JsonNull,
-          evaluasi: input.evaluasi,
+          detailKerja: input.detail_kerja ? (input.detail_kerja as Prisma.InputJsonValue) : Prisma.JsonNull,
+          detailKuliah: input.detail_kuliah ? (input.detail_kuliah as Prisma.InputJsonValue) : Prisma.JsonNull,
+          detailUsaha: input.detail_usaha ? (input.detail_usaha as Prisma.InputJsonValue) : Prisma.JsonNull,
+          evaluasi: (input.evaluasi ?? {}) as Prisma.InputJsonValue,
           verificationStatus: 'PENDING',
           verificationNote: null,
           verifiedAt: null,
@@ -45,37 +100,44 @@ export async function submitTracer(userId: string, input: TracerSubmitInput) {
       });
 
       await tx.alumni.update({
-        where: { id: userId },
+        where: { id: alumniId },
         data: {
           tracerStatus: 'SUDAH',
           submissionId: sub.submissionId,
           submittedAt: sub.submittedAt,
+          ...(input.detail_kerja?.nama_perusahaan ? { pekerjaan: input.detail_kerja.nama_perusahaan } : {}),
+          ...(input.detail_kuliah?.nama_kampus ? { kampus: input.detail_kuliah.nama_kampus } : {}),
+          ...(input.detail_usaha?.nama_usaha ? { pekerjaan: input.detail_usaha.nama_usaha } : {}),
         },
       });
 
       return sub;
     }
 
+    // Submission baru
     const submissionId = generateSubmissionCode();
     const sub = await tx.tracerSubmission.create({
       data: {
-        alumniId: userId,
-        statusKegiatan: input.status_kegiatan as StatusKegiatan,
+        alumniId,
+        statusKegiatan: normalizedStatus,
         masaTunggu: input.masa_tunggu ?? null,
-        detailKerja: input.detail_kerja ?? Prisma.JsonNull,
-        detailKuliah: input.detail_kuliah ?? Prisma.JsonNull,
-        detailUsaha: input.detail_usaha ?? Prisma.JsonNull,
-        evaluasi: input.evaluasi,
+        detailKerja: input.detail_kerja ? (input.detail_kerja as Prisma.InputJsonValue) : Prisma.JsonNull,
+        detailKuliah: input.detail_kuliah ? (input.detail_kuliah as Prisma.InputJsonValue) : Prisma.JsonNull,
+        detailUsaha: input.detail_usaha ? (input.detail_usaha as Prisma.InputJsonValue) : Prisma.JsonNull,
+        evaluasi: (input.evaluasi ?? {}) as Prisma.InputJsonValue,
         submissionId,
       },
     });
 
     await tx.alumni.update({
-      where: { id: userId },
+      where: { id: alumniId },
       data: {
         tracerStatus: 'SUDAH',
         submissionId,
         submittedAt: new Date(),
+        ...(input.detail_kerja?.nama_perusahaan ? { pekerjaan: input.detail_kerja.nama_perusahaan } : {}),
+        ...(input.detail_kuliah?.nama_kampus ? { kampus: input.detail_kuliah.nama_kampus } : {}),
+        ...(input.detail_usaha?.nama_usaha ? { pekerjaan: input.detail_usaha.nama_usaha } : {}),
       },
     });
 

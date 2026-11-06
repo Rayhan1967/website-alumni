@@ -1,5 +1,4 @@
 import { TracerSubmissionPayload, SubmissionResponse } from '@/types/tracer';
-import { completeTracerFormSchema } from '@/schemas/tracerSchema';
 
 /**
  * Retrieve the current access token from authStore (Zustand persisted state).
@@ -27,24 +26,16 @@ function getAccessToken(): string | null {
 export async function submitTracerStudy(
   payload: TracerSubmissionPayload & { agreement: boolean }
 ): Promise<SubmissionResponse> {
-  // Validate schema locally before hitting the network
-  const validationResult = completeTracerFormSchema.safeParse(payload);
-
-  if (!validationResult.success) {
-    const formattedErrors: Record<string, string[]> = {};
-    validationResult.error.issues.forEach((issue) => {
-      const pathKey = issue.path.join('.');
-      if (!formattedErrors[pathKey]) {
-        formattedErrors[pathKey] = [];
-      }
-      formattedErrors[pathKey].push(issue.message);
-    });
-
-    return {
-      success: false,
-      message: 'Validasi gagal. Periksa kembali isian formulir Anda.',
-      errors: formattedErrors,
-    };
+  // Light client-side check — only reject if critical required fields are missing
+  // (Full validation is handled by the backend Zod schema)
+  if (!payload.status_kegiatan) {
+    return { success: false, message: 'Status kegiatan wajib dipilih.' };
+  }
+  if (!payload.evaluasi?.kompetensi_bermanfaat?.length) {
+    return { success: false, message: 'Pilih minimal satu kompetensi yang bermanfaat.' };
+  }
+  if (!payload.agreement) {
+    return { success: false, message: 'Anda harus menyetujui pernyataan kebenaran data.' };
   }
 
   const accessToken = getAccessToken();
