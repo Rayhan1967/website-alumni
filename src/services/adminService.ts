@@ -58,11 +58,6 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}, isR
   const freshToken = await ensureFreshAccessToken();
   const base = API_BASE || '';
 
-  // Jika sesi mock lokal, jangan kirim token palsu ke backend karena akan memicu 401 JWT Malformed
-  if (freshToken && freshToken.startsWith('mock-')) {
-    throw new Error('MOCK_SESSION_FALLBACK');
-  }
-
   const isDeleteNoBody = options.method === 'DELETE' && (!options.body || options.body === '');
 
   const headers: Record<string, string> = {
@@ -70,7 +65,7 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}, isR
     ...(options.headers as Record<string, string>),
   };
 
-  if (freshToken) {
+  if (freshToken && !freshToken.startsWith('mock-')) {
     headers['Authorization'] = `Bearer ${freshToken}`;
   }
 

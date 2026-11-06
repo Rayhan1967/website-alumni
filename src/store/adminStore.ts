@@ -335,7 +335,12 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
       fetchMasterAlumniFromBackend: async () => {
         try {
           const { adminMasterAlumniApi } = await import('@/services/adminService');
-          const res = await adminMasterAlumniApi.list({ limit: 1000 });
+          let res: any = null;
+          try {
+            res = await adminMasterAlumniApi.list({ limit: 1000 });
+          } catch {
+            res = await adminMasterAlumniApi.listPublic({ limit: 1000 });
+          }
           if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
             const mapped: MasterAlumniRecord[] = res.data.map((item: any) => ({
               id: item.id || `mst-${item.nisn}`,

@@ -161,10 +161,8 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     return Array.from(yearsSet).sort((a, b) => b - a);
   }, [masterAlumni, respondents, settings.targetYear]);
 
-  // State pilihan periode tahun (default: settings.targetYear atau 2025)
-  const [selectedYear, setSelectedYear] = useState<string>(() => {
-    return settings.targetYear ? String(settings.targetYear) : "2025";
-  });
+  // State pilihan periode tahun (default: "ALL" untuk seluruh angkatan dari basis data)
+  const [selectedYear, setSelectedYear] = useState<string>("ALL");
 
   const isAllYears = selectedYear === "ALL";
 
