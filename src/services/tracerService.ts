@@ -2,14 +2,32 @@ import { TracerSubmissionPayload, SubmissionResponse } from '@/types/tracer';
 import { completeTracerFormSchema } from '@/schemas/tracerSchema';
 
 /**
- * Service to handle Tracer Study submission adhering to PRD Section 5.1
+ * Retrieve the current access token from authStore (Zustand persisted state).
+ * Reads directly from localStorage to avoid circular imports.
+ */
+function getAccessToken(): string | null {
+  try {
+    const raw = localStorage.getItem('alumni_auth_session');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.state?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Service to handle Tracer Study submission
  * Method: POST
  * Path: /api/v1/tracer-study
+ *
+ * Always submits to the real backend via Vite proxy (/api/v1/...).
+ * Requires a valid JWT access token stored in authStore.
  */
 export async function submitTracerStudy(
   payload: TracerSubmissionPayload & { agreement: boolean }
 ): Promise<SubmissionResponse> {
-  // Validate schema locally before submission
+  // Validate schema locally before hitting the network
   const validationResult = completeTracerFormSchema.safeParse(payload);
 
   if (!validationResult.success) {
@@ -24,45 +42,69 @@ export async function submitTracerStudy(
 
     return {
       success: false,
-      message: 'Validasi gagal.',
+      message: 'Validasi gagal. Periksa kembali isian formulir Anda.',
       errors: formattedErrors,
     };
   }
 
-  // If real API endpoint exists in env, we can fetch, otherwise perform standard mock response
-  try {
-    const apiBaseUrl = (import.meta as any).env?.VITE_API_URL;
-    if (apiBaseUrl) {
-      const res = await fetch(`${apiBaseUrl}/api/v1/tracer-study`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      return await res.json();
-    }
-  } catch (err) {
-    console.warn('Backend server not reachable, falling back to client simulation:', err);
-  }
+  const accessToken = getAccessToken();
 
-  // Standard Mock Server Response matching PRD 5.1
-  await new Promise((res) => setTimeout(res, 600));
-
-  const now = new Date();
-  const year = now.getFullYear().toString();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const randomSeq = Math.floor(1000 + Math.random() * 9000).toString();
-  const submissionId = `${year}${month}${randomSeq}`;
-
-  const response: SubmissionResponse = {
-    success: true,
-    message: 'Data tracer study berhasil disimpan. Terima kasih atas partisipasi Anda.',
-    data: {
-      submission_id: submissionId,
-      submitted_at: now.toISOString(),
-    },
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
   };
 
-  return response;
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  try {
+    const res = await fetch('/api/v1/tracer-study', {
+      method: 'POST',
+      headers,
+      credentials: 'include', // also send httpOnly cookies as fallback
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // 401 Unauthorized
+      if (res.status === 401) {
+        return {
+          success: false,
+          message: 'Sesi Anda telah berakhir. Silakan login kembali.',
+        };
+      }
+
+      // 409 Conflict — already submitted
+      if (res.status === 409) {
+        return {
+          success: false,
+          message: data?.message ?? 'Anda sudah pernah mengisi kuesioner tracer study.',
+        };
+      }
+
+      return {
+        success: false,
+        message: data?.message ?? `Gagal mengirim data (HTTP ${res.status}).`,
+        errors: data?.errors,
+      };
+    }
+
+    // Backend returns { success, message, data: { submissionId, submittedAt, submission_id, submitted_at } }
+    return {
+      success: true,
+      message: data?.message ?? 'Data tracer study berhasil disimpan.',
+      data: {
+        submission_id: data?.data?.submissionId ?? data?.data?.submission_id,
+        submitted_at: data?.data?.submittedAt ?? data?.data?.submitted_at,
+      },
+    };
+  } catch (err) {
+    console.error('[TracerService] Network error:', err);
+    return {
+      success: false,
+      message: 'Gagal terhubung ke server. Periksa koneksi internet Anda dan coba lagi.',
+    };
+  }
 }
