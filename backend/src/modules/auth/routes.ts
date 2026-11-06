@@ -4,6 +4,7 @@ import { validateBody } from '../../core/middleware/validate.js';
 import { loginSchema, registerSchema, refreshSchema, changePasswordSchema } from './schemas.js';
 import { login, register, refreshAccessToken, getMe, changePassword } from './service.js';
 import { successResponse } from '../../core/utils/response.js';
+import { env } from '../../config/env.js';
 import { z } from 'zod';
 
 type RegisterBody = z.infer<typeof registerSchema>;
@@ -11,103 +12,105 @@ type LoginBody = z.infer<typeof loginSchema>;
 type RefreshBody = z.infer<typeof refreshSchema>;
 type ChangePasswordBody = z.infer<typeof changePasswordSchema>;
 
+/** Cookie options for access token (short-lived) */
+const accessCookieOpts = {
+  httpOnly: true,
+  secure: env.isProd,
+  sameSite: 'strict' as const,
+  maxAge: 15 * 60, // seconds
+  path: '/',
+};
+
+/** Cookie options for refresh token (long-lived, restricted path) */
+const refreshCookieOpts = {
+  httpOnly: true,
+  secure: env.isProd,
+  sameSite: 'strict' as const,
+  maxAge: 7 * 24 * 60 * 60, // seconds
+  path: '/api/v1/auth/refresh',
+};
+
 export async function authRoutes(app: FastifyInstance) {
-  // POST /auth/login
+  // POST /auth/login — strict rate-limit for brute-force protection
   app.post('/auth/login', {
     config: {
       rateLimit: {
-        max: 15,
+        max: 10,
         timeWindow: '1 minute',
+        keyGenerator: (req: any) => `login:${req.ip}`,
       },
     },
     preHandler: validateBody(loginSchema),
   }, async (request, reply) => {
     const body = request.body as LoginBody;
-    const { alumni, accessToken, refreshToken } = await login(app, body);
+    const clientIp = request.ip;
+    const { alumni, accessToken, refreshToken } = await login(app, body, clientIp);
 
-    reply.setCookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-      path: '/',
-    });
+    reply.setCookie('accessToken', accessToken, accessCookieOpts);
+    reply.setCookie('refreshToken', refreshToken, refreshCookieOpts);
 
-    reply.setCookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-
+    // Also return tokens in body for SPA convenience (frontend stores in memory, not localStorage)
     return reply.send(successResponse({
       user: alumni,
       accessToken,
-      refreshToken,
+      // Do NOT return refreshToken in body — only via httpOnly cookie
     }, 'Login berhasil'));
   });
 
-  // POST /auth/register
+  // POST /auth/register — moderate rate-limit
   app.post('/auth/register', {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: '1 minute',
+        keyGenerator: (req: any) => `register:${req.ip}`,
+      },
+    },
     preHandler: validateBody(registerSchema),
   }, async (request, reply) => {
     const body = request.body as RegisterBody;
     const { alumni, accessToken, refreshToken } = await register(app, body);
 
-    reply.setCookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-      path: '/',
-    });
-
-    reply.setCookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    reply.setCookie('accessToken', accessToken, accessCookieOpts);
+    reply.setCookie('refreshToken', refreshToken, refreshCookieOpts);
 
     return reply.status(201).send(successResponse({
       user: alumni,
       accessToken,
-      refreshToken,
     }, 'Registrasi berhasil'));
   });
 
-  // POST /auth/refresh
+  // POST /auth/refresh — only accepts httpOnly cookie (not body token from browser)
   app.post('/auth/refresh', {
-    preHandler: validateBody(refreshSchema),
+    config: {
+      rateLimit: {
+        max: 30,
+        timeWindow: '1 minute',
+        keyGenerator: (req: any) => `refresh:${req.ip}`,
+      },
+    },
   }, async (request, reply) => {
-    const body = request.body as RefreshBody;
-    const { accessToken, refreshToken: newRefreshToken } = await refreshAccessToken(app, body.refreshToken);
+    // Prefer cookie, fallback to body for API clients
+    const cookieToken = (request as any).cookies?.refreshToken;
+    const bodyToken = (request.body as any)?.refreshToken;
+    const tokenToUse = cookieToken || bodyToken;
 
-    reply.setCookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-      path: '/',
-    });
+    if (!tokenToUse) {
+      return reply.status(401).send({ success: false, message: 'Refresh token tidak ditemukan' });
+    }
 
-    reply.setCookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    const { accessToken, refreshToken: newRefreshToken } = await refreshAccessToken(app, tokenToUse);
 
-    return reply.send(successResponse({ accessToken, refreshToken: newRefreshToken }, 'Token diperbarui'));
+    reply.setCookie('accessToken', accessToken, accessCookieOpts);
+    reply.setCookie('refreshToken', newRefreshToken, refreshCookieOpts);
+
+    return reply.send(successResponse({ accessToken }, 'Token diperbarui'));
   });
 
-  // POST /auth/logout
+  // POST /auth/logout — clear cookies
   app.post('/auth/logout', async (request, reply) => {
     reply.clearCookie('accessToken', { path: '/' });
-    reply.clearCookie('refreshToken', { path: '/' });
+    reply.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
     return reply.send(successResponse(null, 'Logout berhasil'));
   });
 

@@ -16,36 +16,61 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export async function buildApp(): Promise<FastifyInstance> {
   const app = fastify({
     logger: {
-      level: env.isProd ? 'info' : 'debug',
+      level: env.isProd ? 'warn' : 'debug',
       transport: !env.isProd ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
+      // Redact sensitive fields from logs
+      redact: [
+        'req.headers.authorization',
+        'req.body.password',
+        'req.body.currentPassword',
+        'req.body.newPassword',
+      ],
     },
     ajv: {
       customOptions: { removeAdditional: 'all' },
     },
+    // Limit request body to 10MB
+    bodyLimit: 10 * 1024 * 1024,
   });
 
-  // CORS
-  // CORS
+  // CORS — restrict to known origins in production
   await app.register(cors, {
-    origin: true,
+    origin: env.isProd ? env.corsOrigins : true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   });
 
-  // Helmet
+  // Helmet — security headers
   await app.register(helmet, {
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
   });
 
-  // Rate limiting
+  // Global rate limiting
   await app.register(rateLimit, {
+    global: true,
     max: 200,
     timeWindow: '1 minute',
     keyGenerator: (req) => req.ip,
+    errorResponseBuilder: (_req, context) => ({
+      success: false,
+      message: `Terlalu banyak permintaan, coba lagi setelah ${Math.ceil(context.ttl / 1000)} detik`,
+    }),
   });
 
-  // JWT
+  // JWT (access token)
   await app.register(jwt, {
     secret: env.JWT_ACCESS_SECRET,
     sign: { expiresIn: env.JWT_ACCESS_EXPIRY },
@@ -57,11 +82,10 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Cookies
   await app.register(cookie, {
-    secret: env.JWT_ACCESS_SECRET,
-    parseOptions: { httpOnly: true, secure: env.isProd, sameSite: 'lax' },
+    secret: env.COOKIE_SECRET,
   });
 
-  // Static files
+  // Static files (uploads)
   await app.register(staticFiles, {
     root: path.join(__dirname, '..', 'uploads'),
     prefix: '/uploads/',
@@ -69,7 +93,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   // Health check
-  app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+  app.get('/health', {
+    config: { rateLimit: false },
+  }, async () => ({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  }));
 
   // API routes
   await app.register(routes, { prefix: env.API_PREFIX });

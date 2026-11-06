@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
+import { env } from '../../config/env.js';
+import crypto from 'node:crypto';
 
-const SALT_ROUNDS = 10;
+// Use 12 rounds in production, 10 in development (faster tests)
+const SALT_ROUNDS = env.isProd ? 12 : 10;
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
@@ -10,11 +13,11 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export function generateRandomPassword(length = 12): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-  let password = '';
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+/** Cryptographically secure random password */
+export function generateRandomPassword(length = 16): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  const bytes = crypto.randomBytes(length);
+  return Array.from(bytes)
+    .map((b) => chars[b % chars.length])
+    .join('');
 }

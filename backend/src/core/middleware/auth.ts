@@ -7,15 +7,20 @@ export interface AuthPayload {
   nisn: string;
   email: string;
   role: Role;
+  iat?: number;
+  exp?: number;
 }
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   let token: string | undefined;
+
+  // Prefer Authorization header (Bearer scheme)
   const authHeader = request.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (authHeader?.startsWith('Bearer ')) {
     token = authHeader.slice(7);
-  } else if ((request as any).cookies?.accessToken) {
-    token = (request as any).cookies.accessToken;
+  } else {
+    // Fallback to httpOnly cookie
+    token = (request as any).cookies?.accessToken;
   }
 
   if (!token) {
@@ -24,14 +29,24 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
   try {
     const payload = request.server.jwt.verify<AuthPayload>(token);
+
+    // Extra: check expiry explicitly (belt-and-suspenders)
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      throw HttpError.unauthorized('Token telah kadaluarsa');
+    }
+
     request.user = payload;
-  } catch (err) {
-    throw HttpError.unauthorized('Token tidak valid atau kadaluarsa');
+  } catch (err: any) {
+    if (err instanceof HttpError) throw err;
+    if (err?.message === 'jwt expired') {
+      throw HttpError.unauthorized('Token telah kadaluarsa, silakan refresh');
+    }
+    throw HttpError.unauthorized('Token tidak valid');
   }
 }
 
 export function authorize(...allowedRoles: Role[]) {
-  return async function (request: FastifyRequest, reply: FastifyReply) {
+  return async function (request: FastifyRequest, _reply: FastifyReply) {
     if (!request.user) {
       throw HttpError.unauthorized('Tidak terautentikasi');
     }
@@ -41,21 +56,21 @@ export function authorize(...allowedRoles: Role[]) {
   };
 }
 
-export async function optionalAuth(request: FastifyRequest, reply: FastifyReply) {
+export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply) {
   let token: string | undefined;
   const authHeader = request.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
+  if (authHeader?.startsWith('Bearer ')) {
     token = authHeader.slice(7);
-  } else if ((request as any).cookies?.accessToken) {
-    token = (request as any).cookies.accessToken;
+  } else {
+    token = (request as any).cookies?.accessToken;
   }
-  if (!token) {
-    return;
-  }
+
+  if (!token) return;
+
   try {
     const payload = request.server.jwt.verify<AuthPayload>(token);
     request.user = payload;
   } catch {
-    // ignore invalid token for optional auth
+    // Silently ignore for optional auth — do not block request
   }
 }

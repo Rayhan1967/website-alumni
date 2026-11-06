@@ -9,10 +9,16 @@ const envSchema = z.object({
   HOST: z.string().default('0.0.0.0'),
   API_PREFIX: z.string().default('/api/v1'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL wajib diisi'),
+
+  // JWT — access and refresh MUST use different secrets
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET minimal 32 karakter'),
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET minimal 32 karakter'),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
+
+  // Cookie signing secret (separate from JWT)
+  COOKIE_SECRET: z.string().min(32, 'COOKIE_SECRET minimal 32 karakter').default('CookieSecretDefault32CharsMust!!'),
+
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   UPLOAD_DIR: z.string().default('./uploads'),
   MAX_FILE_SIZE: z.coerce.number().default(5 * 1024 * 1024),
