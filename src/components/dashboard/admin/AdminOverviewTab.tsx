@@ -70,10 +70,25 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     return Array.from(yearsSet).sort((a, b) => b - a);
   }, [masterAlumni, respondents, settings.targetYear]);
 
-  // State pilihan periode tahun (default: settings.targetYear atau 2025)
+  // State pilihan periode tahun (default: "ALL" / Semua Angkatan, persisten via localStorage)
   const [selectedYear, setSelectedYear] = useState<string>(() => {
-    return settings.targetYear ? String(settings.targetYear) : "2025";
+    try {
+      const saved = localStorage.getItem("admin_overview_selected_year");
+      if (saved) return saved;
+    } catch {
+      // fallback jika localStorage dibatasi browser
+    }
+    return "ALL";
   });
+
+  const handleSelectYear = (year: string) => {
+    setSelectedYear(year);
+    try {
+      localStorage.setItem("admin_overview_selected_year", year);
+    } catch {
+      // ignore
+    }
+  };
 
   const isAllYears = selectedYear === "ALL";
 
@@ -324,7 +339,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
       <OverviewBanner
         selectedYear={selectedYear}
         isAllYears={isAllYears}
-        onSelectYear={setSelectedYear}
+        onSelectYear={handleSelectYear}
         availableYears={availableYears}
         totalMaster={totalMaster}
         totalRespondents={filteredRespondents.length}

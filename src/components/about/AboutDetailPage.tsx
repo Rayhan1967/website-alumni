@@ -5,11 +5,7 @@ import { useAdminStore } from "@/store/adminStore";
 import { getHelpdeskWaUrl } from "@/lib/whatsapp";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
-import {
-  ArrowRight,
-  ChevronRight,
-  Headphones,
-} from "lucide-react";
+import { ArrowRight, ChevronRight, Headphones } from "lucide-react";
 
 const ALUR_LANGKAH = [
   {
@@ -424,23 +420,6 @@ export const AboutDetailPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Quick Summary Highlights */}
-            <div className="bg-white rounded-md p-5 border border-slate-200 shadow-xs space-y-3">
-              <div className="space-y-2.5 text-xs text-slate-600">
-                {HIGHLIGHT_STATS.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="flex items-center justify-between"
-                  >
-                    <span>{stat.label}</span>
-                    <span className="font-bold text-slate-900">
-                      {stat.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Helpdesk Contact Box */}
             <div className="bg-slate-50 rounded-md p-5 border border-slate-200 space-y-3">
               <div className="flex items-center gap-2 text-slate-950 font-bold text-sm">
@@ -454,7 +433,7 @@ export const AboutDetailPage: React.FC = () => {
               <a
                 href={getHelpdeskWaUrl(
                   useAdminStore.getState().settings.kontakBkk,
-                  "Halo Helpdesk Tracer Study SMK Sasmita Jaya 2"
+                  "Halo Helpdesk Tracer Study SMK Sasmita Jaya 2",
                 )}
                 target="_blank"
                 rel="noreferrer"

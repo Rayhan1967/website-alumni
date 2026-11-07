@@ -14,7 +14,7 @@ import {
 } from "@/lib/reportStats";
 
 const YEAR_OPTIONS = [
-  { value: "ALL", label: "Semua Tahun (Akumulatif)" },
+  { value: "ALL", label: "Semua Tahun" },
   { value: "2025", label: "Tahun Lulus 2025" },
   { value: "2024", label: "Tahun Lulus 2024" },
   { value: "2023", label: "Tahun Lulus 2023" },
@@ -23,7 +23,7 @@ const YEAR_OPTIONS = [
 
 const ALL_JURUSAN_OPTION = {
   value: "ALL",
-  label: "Semua Jurusan (Total Global)",
+  label: "Semua Jurusan",
 };
 
 export const ReportSection: React.FC = () => {
@@ -100,7 +100,7 @@ export const ReportSection: React.FC = () => {
       .sort((a, b) => b - a)
       .map((y) => ({ value: String(y), label: `Tahun Lulus ${y}` }));
     if (years.length === 0) return YEAR_OPTIONS;
-    return [{ value: "ALL", label: "Semua Tahun (Akumulatif)" }, ...years];
+    return [{ value: "ALL", label: "Semua Tahun" }, ...years];
   }, [stats.byJurusan]);
 
   // Data chart (persentase dihitung dari jumlah responden basis data)
@@ -161,7 +161,7 @@ export const ReportSection: React.FC = () => {
           <div className="p-5 sm:p-6  flex flex-col justify-between">
             <div>
               <div className="pb-3 border-b border-slate-100 mb-4">
-                <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                <h3 className="text-sm sm:text-base font-medium text-slate-900">
                   Laju Serap & Aktivitas
                 </h3>
               </div>
@@ -248,10 +248,10 @@ export const ReportSection: React.FC = () => {
                 </svg>
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-2xl font-black text-slate-900 leading-none">
+                  <span className="text-2xl font-bold text-slate-900 leading-none">
                     {chartStats.aktivitas.bekerja.percent}%
                   </span>
-                  <span className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-500 mt-1 tracking-wider">
                     Bekerja
                   </span>
                 </div>
@@ -262,7 +262,7 @@ export const ReportSection: React.FC = () => {
                 <div className="flex items-center justify-between p-2 ">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#182a4a]" />
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-medium text-slate-800">
                       Bekerja
                     </span>
                   </div>
@@ -273,7 +273,7 @@ export const ReportSection: React.FC = () => {
                 <div className="flex items-center justify-between p-2 ">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
-                    <span className="font-semibold text-slate-800">Kuliah</span>
+                    <span className="font-medium text-slate-800">Kuliah</span>
                   </div>
                   <span className="font-bold text-slate-900">
                     {chartStats.aktivitas.kuliah.percent}%
@@ -282,7 +282,7 @@ export const ReportSection: React.FC = () => {
                 <div className="flex items-center justify-between p-2 ">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#64748b]" />
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-medium text-slate-800">
                       Wirausaha
                     </span>
                   </div>
@@ -293,7 +293,7 @@ export const ReportSection: React.FC = () => {
                 <div className="flex items-center justify-between p-2 ">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                    <span className="font-semibold text-slate-800">
+                    <span className="font-medium text-slate-800">
                       Belum Kerja
                     </span>
                   </div>
@@ -315,7 +315,7 @@ export const ReportSection: React.FC = () => {
               </div>
 
               <div className="p-4 text-center my-2">
-                <div className="text-3xl font-black text-[#182a4a] mt-1">
+                <div className="text-3xl font-bold text-[#182a4a] mt-1">
                   {chartStats.kesesuaian.totalLinear}%
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">
@@ -325,7 +325,7 @@ export const ReportSection: React.FC = () => {
 
               <div className="space-y-3 mt-4 text-xs">
                 <div>
-                  <div className="flex justify-between font-semibold mb-1">
+                  <div className="flex justify-between font-medium mb-1">
                     <span className="text-slate-800">Sangat Sesuai</span>
                     <span className="text-slate-900 font-bold">
                       {chartStats.kesesuaian.sangatSesuai.percent}%
@@ -342,7 +342,7 @@ export const ReportSection: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="flex justify-between font-semibold mb-1">
+                  <div className="flex justify-between font-medium mb-1">
                     <span className="text-slate-800">Sesuai</span>
                     <span className="text-slate-900 font-bold">
                       {chartStats.kesesuaian.sesuai.percent}%
@@ -359,7 +359,7 @@ export const ReportSection: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="flex justify-between font-semibold mb-1">
+                  <div className="flex justify-between font-medium mb-1">
                     <span className="text-slate-800">Kurang Sesuai</span>
                     <span className="text-slate-900 font-bold">
                       {chartStats.kesesuaian.kurangSesuai.percent}%
@@ -376,7 +376,7 @@ export const ReportSection: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="flex justify-between font-semibold mb-1">
+                  <div className="flex justify-between font-medium mb-1">
                     <span className="text-slate-800">Tidak Sesuai</span>
                     <span className="text-slate-900 font-bold">
                       {chartStats.kesesuaian.tidakSesuai.percent}%
@@ -487,7 +487,7 @@ export const ReportSection: React.FC = () => {
         <div className="flex justify-center">
           <button
             onClick={() => navigate("/laporan")}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#182a4a] hover:bg-[#122038] text-white font-semibold text-xs shadow-md transition active:scale-95 cursor-pointer self-start sm:self-auto hover:scale-105"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#182a4a] hover:bg-[#122038] text-white font-medium text-xs shadow-md transition active:scale-95 cursor-pointer self-start sm:self-auto hover:scale-105"
           >
             <span>Buka Halaman Laporan Lengkap</span>
             <ArrowRight className="w-3.5 h-3.5" />
