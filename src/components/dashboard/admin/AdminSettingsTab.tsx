@@ -38,8 +38,16 @@ export const AdminSettingsTab: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSettings(formData);
-    showToast("Pengaturan sistem dan profil pelaporan berhasil disimpan.");
+    updateSettings({
+      ...formData,
+      yearlyTargets: {
+        ...(settings.yearlyTargets || {}),
+        [Number(formData.targetYear)]: Number(formData.targetQuota),
+      },
+    });
+    showToast(
+      `Pengaturan dan target Angkatan ${formData.targetYear} berhasil disimpan.`,
+    );
   };
 
   const handleConfirmReset = () => {
@@ -76,7 +84,7 @@ export const AdminSettingsTab: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
                     Target Sasaran & Periode Pengisian
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -88,7 +96,7 @@ export const AdminSettingsTab: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Target Jumlah Alumni (Siswa)
                   </label>
                   <input
@@ -103,23 +111,26 @@ export const AdminSettingsTab: React.FC = () => {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-[#0d2346] focus:ring-2 focus:ring-[#0d2346]/10 focus:outline-none transition bg-slate-50/50 focus:bg-white"
                   />
                   <span className="text-[10px] text-slate-400 block">
-                    Dasar perhitungan persentase partisipasi tracer study.
+                    Dasar perhitungan target partisipasi untuk Angkatan {formData.targetYear}.
                   </span>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Tahun Kelulusan Sasaran
                   </label>
                   <input
                     type="number"
                     value={formData.targetYear}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        targetYear: Number(e.target.value),
-                      })
-                    }
+                    onChange={(e) => {
+                      const newYear = Number(e.target.value);
+                      const savedTarget = settings.yearlyTargets?.[newYear];
+                      setFormData((prev) => ({
+                        ...prev,
+                        targetYear: newYear,
+                        ...(savedTarget ? { targetQuota: savedTarget } : {}),
+                      }));
+                    }}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:border-[#0d2346] focus:ring-2 focus:ring-[#0d2346]/10 focus:outline-none transition bg-slate-50/50 focus:bg-white"
                   />
                   <span className="text-[10px] text-slate-400 block">
@@ -128,7 +139,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Tanggal Mulai Pengisian
                   </label>
                   <input
@@ -142,7 +153,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Tanggal Batas Pengisian
                   </label>
                   <input
@@ -161,7 +172,7 @@ export const AdminSettingsTab: React.FC = () => {
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
                     Nama Pejabat Penandatangan Laporan Resmi
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -173,7 +184,7 @@ export const AdminSettingsTab: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Nama Kepala Sekolah
                   </label>
                   <input
@@ -190,7 +201,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     NIP Kepala Sekolah
                   </label>
                   <input
@@ -207,7 +218,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Nama Ketua Bursa Kerja Khusus (BKK)
                   </label>
                   <input
@@ -221,7 +232,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     NIP / NUPTK Ketua BKK
                   </label>
                   <input
@@ -240,7 +251,7 @@ export const AdminSettingsTab: React.FC = () => {
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                  <h3 className="text-xs sm:text-sm font-semibold text-slate-900">
                     Identitas Sekolah & Kontak Layanan
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -251,7 +262,7 @@ export const AdminSettingsTab: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Nama Sekolah
                   </label>
                   <input
@@ -266,7 +277,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     NPSN (Nomor Pokok Sekolah Nasional)
                   </label>
                   <input
@@ -280,7 +291,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Alamat Lengkap Sekolah
                   </label>
                   <input
@@ -298,7 +309,7 @@ export const AdminSettingsTab: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="block text-xs font-bold text-slate-900">
+                  <label className="block text-xs font-semibold text-slate-900">
                     Nomor Kontak WhatsApp Layanan Alumni
                   </label>
                   <input

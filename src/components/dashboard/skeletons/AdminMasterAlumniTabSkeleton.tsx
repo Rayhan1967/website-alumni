@@ -9,13 +9,13 @@ export const AdminMasterAlumniTabSkeleton: React.FC = () => {
       aria-label="Memuat data master alumni..."
     >
       {/* Header Banner */}
-      <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 shadow-xs">
-        <div className="space-y-1">
+      <div className="p-4 sm:p-5 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+        <div className="space-y-1 shrink-0">
           <Skeleton className="h-6 w-52 bg-slate-200" />
           <Skeleton className="h-3.5 w-72 bg-slate-100" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto shrink-0">
           <Skeleton className="h-9 w-36 rounded-xl bg-slate-100" />
           <Skeleton className="h-9 w-36 rounded-xl bg-slate-100" />
           <Skeleton className="h-9 w-32 rounded-xl bg-slate-200" />

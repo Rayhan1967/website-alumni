@@ -155,6 +155,9 @@ export const useAuthStore = create<AuthState>()(
       lastDashboardActivity: null,
 
       login: async (identifier: string, password?: string, roleHint?: string) => {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('admin_mobile_device_notice_dismissed');
+        }
         const cleanIdent = identifier.trim();
         const pwd = password?.trim() || cleanIdent;
 
@@ -322,6 +325,7 @@ export const useAuthStore = create<AuthState>()(
           try {
             localStorage.removeItem(USER_ACTIVITY_STORAGE_KEY);
             localStorage.removeItem('alumni_demo_last_activity');
+            sessionStorage.removeItem('admin_mobile_device_notice_dismissed');
           } catch {
             // ignore
           }

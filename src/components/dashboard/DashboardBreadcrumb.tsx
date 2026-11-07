@@ -87,12 +87,12 @@ export const DashboardBreadcrumb: React.FC<DashboardBreadcrumbProps> = ({
               {currentLabel}
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="font-bold text-[#0d2346] truncate">
+            <span className="font-semibold text-[#0d2346] truncate">
               {subPageTitle}
             </span>
           </>
         ) : (
-          <span className="font-bold text-[#0d2346] truncate">
+          <span className="font-semibold text-[#0d2346] truncate">
             {currentLabel}
           </span>
         )}

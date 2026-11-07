@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: env.VITE_PROXY_TARGET || 'https://tend-nikon-rows-mins.trycloudflare.com',
+          target: env.VITE_PROXY_TARGET || 'https://played-farm-sampling-burst.trycloudflare.com',
           changeOrigin: true,
           secure: false,
         },
