@@ -167,7 +167,7 @@ export const ReportDetailPage: React.FC = () => {
               Beranda
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="font-semibold text-slate-800">
+            <span className="font-medium text-slate-800">
               Hasil & Laporan Tracer Study
             </span>
           </nav>
@@ -449,7 +449,7 @@ export const ReportDetailPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-3.5 sm:pt-4">
             {/* Dropdown 1: Tahun Lulus / Periode */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
                 Tahun Lulus
               </label>
               <CustomSelect
@@ -461,7 +461,7 @@ export const ReportDetailPage: React.FC = () => {
 
             {/* Dropdown 2: Jurusan / Program Keahlian */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
                 Jurusan / Program Keahlian
               </label>
               <CustomSelect
@@ -579,7 +579,7 @@ export const ReportDetailPage: React.FC = () => {
                       }
                       className={`cursor-pointer transition-colors ${
                         isSelected
-                          ? "bg-blue-50/80 font-semibold"
+                          ? "bg-blue-50/80 font-medium"
                           : "hover:bg-slate-50 text-slate-700"
                       }`}
                     >
@@ -773,7 +773,7 @@ export const ReportDetailPage: React.FC = () => {
 
                   {/* Center Text */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                    <span className="text-xl sm:text-3xl font-black text-slate-900 leading-none">
+                    <span className="text-xl sm:text-3xl font-bold text-slate-900 leading-none">
                       {chartStats.aktivitas.bekerja.percent}%
                     </span>
                     <span className="text-[10px] font-bold text-slate-500 mt-1">
@@ -788,7 +788,7 @@ export const ReportDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between p-2 sm:p-2.5 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-md bg-[#182a4a] shrink-0" />
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-medium text-slate-800">
                         Bekerja
                       </span>
                     </div>
@@ -806,7 +806,7 @@ export const ReportDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between p-2 sm:p-2.5 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-md bg-[#3b82f6] shrink-0" />
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-medium text-slate-800">
                         Melanjutkan Pendidikan
                       </span>
                     </div>
@@ -824,7 +824,7 @@ export const ReportDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between p-2 sm:p-2.5  text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-md bg-[#64748b] shrink-0" />
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-medium text-slate-800">
                         Wirausaha Mandiri
                       </span>
                     </div>
@@ -842,7 +842,7 @@ export const ReportDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between p-2 sm:p-2.5 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-md bg-slate-300 shrink-0" />
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-medium text-slate-800">
                         Belum Kerja / Cari Kerja
                       </span>
                     </div>
@@ -882,7 +882,7 @@ export const ReportDetailPage: React.FC = () => {
 
                 {/* Big Linear Badge */}
                 <div className="text-center my-2">
-                  <div className="text-2xl sm:text-4xl font-black text-[#182a4a] mt-1">
+                  <div className="text-2xl sm:text-4xl font-bold text-[#182a4a] mt-1">
                     {chartStats.kesesuaian.totalLinear}%
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
@@ -894,7 +894,7 @@ export const ReportDetailPage: React.FC = () => {
                 <div className="space-y-3 mt-4 sm:mt-5">
                   {/* Sangat Sesuai */}
                   <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
+                    <div className="flex justify-between text-xs font-medium mb-1">
                       <span className="text-slate-800 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-[#182a4a]" />
                         <span>Sangat Sesuai</span>
@@ -916,7 +916,7 @@ export const ReportDetailPage: React.FC = () => {
 
                   {/* Sesuai */}
                   <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
+                    <div className="flex justify-between text-xs font-medium mb-1">
                       <span className="text-slate-800 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-blue-600" />
                         <span>Sesuai</span>
@@ -938,7 +938,7 @@ export const ReportDetailPage: React.FC = () => {
 
                   {/* Kurang Sesuai */}
                   <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
+                    <div className="flex justify-between text-xs font-medium mb-1">
                       <span className="text-slate-800 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-slate-500" />
                         <span>Kurang Sesuai</span>
@@ -960,7 +960,7 @@ export const ReportDetailPage: React.FC = () => {
 
                   {/* Tidak Sesuai */}
                   <div>
-                    <div className="flex justify-between text-xs font-semibold mb-1">
+                    <div className="flex justify-between text-xs font-medium mb-1">
                       <span className="text-slate-800 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-slate-300" />
                         <span>Tidak Sesuai</span>
