@@ -55,8 +55,12 @@ const JURUSAN_OPTIONS = [
 ];
 
 export const AdminMasterAlumniTab: React.FC = () => {
-  const { masterAlumni, deleteMasterAlumni, addSingleMasterAlumni, fetchMasterAlumniFromBackend } =
-    useAdminStore();
+  const {
+    masterAlumni,
+    deleteMasterAlumni,
+    addSingleMasterAlumni,
+    fetchMasterAlumniFromBackend,
+  } = useAdminStore();
 
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -201,7 +205,9 @@ export const AdminMasterAlumniTab: React.FC = () => {
     try {
       const ok = await fetchMasterAlumniFromBackend();
       if (ok) {
-        showToast("Data siswa alumni berhasil disinkronkan dari database pusat.");
+        showToast(
+          "Data siswa alumni berhasil disinkronkan dari database pusat.",
+        );
       } else {
         showToast("Sinkronisasi selesai (data telah mutakhir).");
       }
@@ -216,29 +222,31 @@ export const AdminMasterAlumniTab: React.FC = () => {
     <>
       <div className="space-y-5">
         {/* Header Banner */}
-        <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+        <div className="p-4 sm:p-5 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+          <div className="shrink-0">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 whitespace-nowrap">
               <SolidUsersIcon className="w-5 h-5 text-[#0d2346] shrink-0" />
               <span>Data Siswa Lulusan</span>
-            </h2>
+            </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto shrink-0 border border-slate-200 px-2 py-1 rounded-md">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full xl:w-auto border border-slate-200 p-1.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-md bg-slate-50/50">
             <button
               type="button"
               onClick={handleSyncFromDatabase}
               disabled={isSyncing}
-              className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 transition flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+              className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-slate-200 text-slate-800 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
               title="Sinkronkan data siswa langsung dari database pusat"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
-              <span>{isSyncing ? "Menyinkronkan..." : "Sinkron Database"}</span>
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`}
+              />
+              <span>{isSyncing ? "Menyinkronkan..." : "Refresh"}</span>
             </button>
             <button
               type="button"
               onClick={handleExportExcel}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0"
               title="Ekspor seluruh data siswa lulusan ke berkas Excel (.xlsx)"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-slate-700 shrink-0" />
@@ -247,7 +255,7 @@ export const AdminMasterAlumniTab: React.FC = () => {
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer shrink-0"
               title="Unduh format template Excel (.xlsx) untuk impor data"
             >
               <Download className="w-3.5 h-3.5 text-slate-600 shrink-0" />

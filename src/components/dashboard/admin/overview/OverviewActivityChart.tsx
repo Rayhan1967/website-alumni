@@ -77,7 +77,7 @@ export const OverviewActivityChart: React.FC<OverviewActivityChartProps> = ({
           </div>
 
           {/* View Mode Toggle Pill */}
-          <div className="inline-flex bg-slate-100 rounded-lg border border-slate-300 text-xs self-start sm:self-auto shrink-0">
+          <div className="inline-flex rounded-lg border border-slate-200 text-xs self-start sm:self-auto shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -87,7 +87,7 @@ export const OverviewActivityChart: React.FC<OverviewActivityChartProps> = ({
               className={cn(
                 "px-2.5 py-1 rounded-l-md text-xs font-medium transition-all cursor-pointer",
                 activityChartMode === "pilar"
-                  ? "bg-slate-200 text-slate-600 shadow-xs"
+                  ? "bg-slate-200 text-slate-800 shadow-xs"
                   : "text-slate-600 hover:text-slate-900",
               )}
             >
@@ -102,7 +102,7 @@ export const OverviewActivityChart: React.FC<OverviewActivityChartProps> = ({
               className={cn(
                 "px-2.5 py-1 rounded-r-md text-xs font-medium transition-all cursor-pointer",
                 activityChartMode === "detail"
-                  ? "bg-slate-200 text-slate-600 shadow-xs"
+                  ? "bg-slate-200 text-slate-800 shadow-xs"
                   : "text-slate-600 hover:text-slate-900",
               )}
             >

@@ -102,7 +102,7 @@ export const OverviewBanner: React.FC<OverviewBannerProps> = ({
             ref={yearDropdownRef}
           >
             <span className="text-xs text-slate-300 font-medium">
-              Periode Angkatan:
+              Periode:
             </span>
             <div className="relative">
               <button

@@ -281,20 +281,18 @@ export const AdminRespondentsTab: React.FC<AdminRespondentsTabProps> = ({
               Data Responden Tracer Study
             </span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Daftar hasil pengisian kuesioner penelusuran tamatan yang tersimpan langsung di dalam sistem.
-          </p>
+         
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={handleSyncFromDatabase}
             disabled={isSyncing}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-60 transition cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-60 transition cursor-pointer shadow-xs"
             title="Ambil data responden terbaru dari database"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-600" : "text-slate-500"}`} />
-            <span>{isSyncing ? "Menyinkronkan..." : "Sinkron Database"}</span>
+            <span>{isSyncing ? "Menyinkronkan..." : "Refresh"}</span>
           </button>
           <div className="text-xs text-slate-600 font-medium bg-slate-50 px-3.5 py-1.5 rounded-lg border border-slate-200 shrink-0">
             Total Masuk: <span className="font-bold text-slate-900">{respondents.length} Responden</span>

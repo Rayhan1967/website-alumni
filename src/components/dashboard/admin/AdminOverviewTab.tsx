@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useAdminStore } from "@/store/adminStore";
+import { useAdminStore, SYNCED_RESPONDENTS_KEY } from "@/store/adminStore";
 import { syncDashboardData } from "@/services/adminService";
+import { AdminOverviewTabSkeleton } from "../skeletons/AdminOverviewTabSkeleton";
 import {
   OverviewBanner,
   OverviewKpiCards,
@@ -32,16 +33,35 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
   const { masterAlumni, respondents, settings } = useAdminStore();
   const [syncNotification, setSyncNotification] = useState<string | null>(null);
 
+  // Jika belum ada data riil di cache, tampilkan skeleton agar tidak ada lompatan/kedipan data
+  const [isInitialSyncing, setIsInitialSyncing] = useState(() => {
+    if (typeof window !== "undefined") {
+      const hasCache = !!localStorage.getItem(SYNCED_RESPONDENTS_KEY);
+      return !hasCache;
+    }
+    return false;
+  });
+
   // Jalankan sinkronisasi awal saat mount
   useEffect(() => {
     let isMounted = true;
-    syncDashboardData().catch(() => {
-      // Background sync fallback
-    });
+    syncDashboardData()
+      .catch(() => {
+        // Background sync fallback
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsInitialSyncing(false);
+        }
+      });
     return () => {
       isMounted = false;
     };
   }, []);
+
+  if (isInitialSyncing) {
+    return <AdminOverviewTabSkeleton />;
+  }
 
   // Kumpulan tahun kelulusan yang tersedia dari data riil dan target settings
   const availableYears = useMemo(() => {

@@ -25,6 +25,7 @@ import { AdminJobsTab } from './admin/AdminJobsTab';
 import { AdminMessagesTab } from './admin/AdminMessagesTab';
 import { AdminExportReportTab } from './admin/AdminExportReportTab';
 import { AdminSettingsTab } from './admin/AdminSettingsTab';
+import { AdminMobileNoticeModal } from './admin/AdminMobileNoticeModal';
 
 import {
   OverviewTabSkeleton,
@@ -405,6 +406,9 @@ export const DashboardLayout: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Admin Mobile/Tablet Device Recommendation Notice */}
+      <AdminMobileNoticeModal isAdmin={isAdmin} />
     </div>
   );
 };

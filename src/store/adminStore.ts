@@ -140,10 +140,56 @@ const DEFAULT_SETTINGS: AdminSettings = {
   },
 };
 
+export const SYNCED_MASTER_KEY = "alumni_synced_master_cache";
+export const SYNCED_RESPONDENTS_KEY = "alumni_synced_respondents_cache";
+export const SYNCED_SETTINGS_KEY = "alumni_synced_settings_cache";
+
+function getInitialMasterAlumni(): MasterAlumniRecord[] {
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(SYNCED_MASTER_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+  }
+  return INITIAL_MASTER_ALUMNI;
+}
+
+function getInitialRespondents(): RespondentRecord[] {
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(SYNCED_RESPONDENTS_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+  }
+  // Kosongkan initial state jika belum ada cache agar tidak menampilkan flash dummy 222 data
+  return [];
+}
+
+function getInitialSettings(): AdminSettings {
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(SYNCED_SETTINGS_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === "object") {
+          return { ...DEFAULT_SETTINGS, ...parsed };
+        }
+      }
+    } catch {}
+  }
+  return DEFAULT_SETTINGS;
+}
+
 export const useAdminStore = create<AdminState>()((set, get) => ({
-  masterAlumni: INITIAL_MASTER_ALUMNI,
-  respondents: INITIAL_RESPONDENTS,
-  settings: DEFAULT_SETTINGS,
+  masterAlumni: getInitialMasterAlumni(),
+  respondents: getInitialRespondents(),
+  settings: getInitialSettings(),
 
   importMasterAlumni: (records) => {
     const currentList = get().masterAlumni;
@@ -370,6 +416,13 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
   },
 
   resetToDefaultData: () => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(SYNCED_MASTER_KEY);
+        localStorage.removeItem(SYNCED_RESPONDENTS_KEY);
+        localStorage.removeItem(SYNCED_SETTINGS_KEY);
+      } catch {}
+    }
     set({
       masterAlumni: INITIAL_MASTER_ALUMNI,
       respondents: INITIAL_RESPONDENTS,
@@ -402,6 +455,11 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
           createdAt: item.createdAt || new Date().toISOString(),
         }));
         set({ masterAlumni: mapped });
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(SYNCED_MASTER_KEY, JSON.stringify(mapped));
+          } catch {}
+        }
         return true;
       }
     } catch (err) {
@@ -489,6 +547,11 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
           };
         });
         set({ respondents: mapped });
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(SYNCED_RESPONDENTS_KEY, JSON.stringify(mapped));
+          } catch {}
+        }
         return true;
       }
     } catch (err) {
@@ -520,6 +583,11 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
                 : state.settings.periodEnd,
           },
         }));
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(SYNCED_SETTINGS_KEY, JSON.stringify(settingsData));
+          } catch {}
+        }
         return true;
       }
     } catch (err) {

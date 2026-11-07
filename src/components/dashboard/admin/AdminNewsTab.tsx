@@ -33,7 +33,8 @@ const SolidNewspaperIcon: React.FC<{ className?: string }> = ({
 );
 
 export const AdminNewsTab: React.FC = () => {
-  const { newsList, addNews, updateNews, deleteNews, fetchNewsFromBackend } = useContentStore();
+  const { newsList, addNews, updateNews, deleteNews, fetchNewsFromBackend } =
+    useContentStore();
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "editor">("list");
@@ -167,17 +168,6 @@ export const AdminNewsTab: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleSyncFromDatabase}
-                disabled={isSyncing}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-60 transition cursor-pointer shadow-xs"
-                title="Ambil data berita terbaru dari database"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-600" : "text-slate-500"}`} />
-                <span>{isSyncing ? "Menyinkronkan..." : "Sinkron Database"}</span>
-              </button>
-
               <button
                 type="button"
                 onClick={() => handleOpenEditor(null)}

@@ -3,11 +3,7 @@ import { useAdminStore } from "@/store/adminStore";
 import { exportJsonToExcel } from "@/lib/excelExport";
 import { downloadBlob } from "@/lib/fileDownload";
 import { Toast } from "@/components/ui/Toast";
-import {
-  FileSpreadsheet,
-  Download,
-  CheckCircle2,
-} from "lucide-react";
+import { FileSpreadsheet, Download, CheckCircle2 } from "lucide-react";
 import {
   buildVokasiExcelRows,
   buildMasterAlumniExcelRows,
@@ -92,14 +88,14 @@ export const AdminExportReportTab: React.FC = () => {
   const handleDirectDownloadOfficialReport = () => {
     window.print();
     showDownloadToast(
-      "Membuka dialog cetak / simpan dokumen Lembar Rekapitulasi Resmi."
+      "Membuka dialog cetak / simpan dokumen Lembar Rekapitulasi Resmi.",
     );
   };
 
   // Memoized report statistics calculation
   const stats = useMemo(
     () => calculateReportStats(masterAlumni, respondents),
-    [masterAlumni, respondents]
+    [masterAlumni, respondents],
   );
 
   const currentDateFormatted = useMemo(
@@ -109,7 +105,7 @@ export const AdminExportReportTab: React.FC = () => {
         month: "long",
         year: "numeric",
       }),
-    []
+    [],
   );
 
   return (
@@ -132,11 +128,6 @@ export const AdminExportReportTab: React.FC = () => {
                 <h3 className="font-bold text-base text-slate-900">
                   Ekspor ke Format Excel (.xlsx) atau CSV
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed mt-1">
-                  Pilih format data yang ingin diunduh. Berkas Excel (.xlsx)
-                  siap pakai langsung terstruktur rapi untuk Microsoft Excel dan
-                  Google Sheets.
-                </p>
               </div>
 
               {/* Format Selection */}
@@ -174,7 +165,8 @@ export const AdminExportReportTab: React.FC = () => {
                     />
                     <div>
                       <span className="font-semibold text-slate-800 block">
-                        Data Lengkap Seluruh Alumni ({masterAlumni.length} Siswa)
+                        Data Lengkap Seluruh Alumni ({masterAlumni.length}{" "}
+                        Siswa)
                       </span>
                       <span className="text-[11px] text-slate-500">
                         Daftar seluruh alumni terdaftar beserta status pengisian
