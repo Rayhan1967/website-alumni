@@ -104,16 +104,23 @@ export const AdminImportModal: React.FC<AdminImportModalProps> = ({
     processFile(file);
   };
 
-  const handleCommitImport = () => {
+  const handleCommitImport = async () => {
     if (parsedRows.length === 0) return;
 
     setIsProcessing(true);
-    setTimeout(() => {
-      const { importedCount } = importMasterAlumni(parsedRows);
+    setErrorMessage("");
+    try {
+      const result = await importMasterAlumni(parsedRows);
       setIsProcessing(false);
-      onSuccess(importedCount);
+      onSuccess(result?.importedCount ?? parsedRows.length);
       onClose();
-    }, 350);
+    } catch (err: any) {
+      console.error(err);
+      setIsProcessing(false);
+      setErrorMessage(
+        err?.message || "Gagal mengimpor data ke basis data. Silakan coba kembali."
+      );
+    }
   };
 
   return (

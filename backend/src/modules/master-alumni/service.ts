@@ -49,7 +49,6 @@ const DAPODIK_TEXT_FIELDS = [
   'pendapatanStudiSambilBerwirausahaUmk',
 ] as const;
 
-// Field tambahan format Dapodik yang numerik
 const DAPODIK_NUMBER_FIELDS = ['lamaProgram', 'usia', 'masaTungguKerja'] as const;
 
 function mapDapodikFields(input: Record<string, any>, data: Record<string, any>) {
@@ -63,24 +62,36 @@ function mapDapodikFields(input: Record<string, any>, data: Record<string, any>)
   }
 }
 
+function cleanStringOrNull(val: unknown): string | null {
+  if (typeof val !== 'string') return null;
+  const trimmed = val.trim();
+  if (!trimmed || trimmed === '-' || trimmed === '3674000000000000' || trimmed === '081200000000') return null;
+  return trimmed;
+}
+
 async function mapCreateInput(input: MasterAlumniCreateInput) {
   const defaultPassword = input.nisn || 'alumni123';
   const passwordHash = await hashPassword(defaultPassword);
 
+  const cleanNik = cleanStringOrNull(input.nik);
+  const cleanEmail = cleanStringOrNull(input.email);
+  const cleanWa = cleanStringOrNull(input.noWhatsapp || input.no_wa || input.no_whatsapp);
+  const tahunLulus = input.tahunLulus || input.tahun_lulus || 2024;
+
   const data: Record<string, any> = {
-    nisn: input.nisn,
-    namaLengkap: input.nama,
-    jurusan: input.jurusan,
-    tahunMasuk: input.tahunLulus - 3,
-    tahunLulus: input.tahunLulus,
+    nisn: input.nisn.trim(),
+    nik: cleanNik,
+    namaLengkap: input.nama.trim(),
+    jurusan: input.jurusan.trim(),
+    tahunMasuk: tahunLulus - 3,
+    tahunLulus,
+    email: cleanEmail,
+    noWhatsApp: cleanWa,
     passwordHash,
     role: 'ALUMNI' as const,
     tracerStatus: 'BELUM' as TracerStatus,
   };
 
-  if (input.nik && input.nik.trim()) data.nik = input.nik.trim();
-  if (input.noWhatsapp && input.noWhatsapp.trim()) data.noWhatsApp = input.noWhatsapp.trim();
-  if (input.email && input.email.trim()) data.email = input.email.trim();
   mapDapodikFields(input as unknown as Record<string, any>, data);
 
   return data;
@@ -88,28 +99,32 @@ async function mapCreateInput(input: MasterAlumniCreateInput) {
 
 function mapUpdateInput(input: MasterAlumniUpdateInput) {
   const data: Record<string, unknown> = {};
-  if (input.nisn) data.nisn = input.nisn;
-  if (input.nik) data.nik = input.nik;
-  if (input.nama) data.namaLengkap = input.nama;
-  if (input.email) data.email = input.email;
-  if (input.jurusan) data.jurusan = input.jurusan;
+  if (input.nisn) data.nisn = input.nisn.trim();
+  if (input.nik !== undefined) data.nik = cleanStringOrNull(input.nik);
+  if (input.nama) data.namaLengkap = input.nama.trim();
+  if (input.email !== undefined) data.email = cleanStringOrNull(input.email);
+  if (input.jurusan) data.jurusan = input.jurusan.trim();
   if (input.tahunLulus) data.tahunLulus = input.tahunLulus;
-  if (input.noWhatsapp) data.noWhatsApp = input.noWhatsapp;
+  if (input.noWhatsapp !== undefined) data.noWhatsApp = cleanStringOrNull(input.noWhatsapp);
   mapDapodikFields(input as unknown as Record<string, any>, data);
   return data;
 }
 
 export async function createMasterAlumni(input: MasterAlumniCreateInput) {
+  const cleanNisn = input.nisn.trim();
+  const cleanNik = cleanStringOrNull(input.nik);
+  const cleanEmail = cleanStringOrNull(input.email);
+
   const orConditions: Array<Record<string, string>> = [
-    { nisn: input.nisn },
+    { nisn: cleanNisn },
   ];
 
-  if (input.nik && input.nik.trim() !== '') {
-    orConditions.push({ nik: input.nik });
+  if (cleanNik) {
+    orConditions.push({ nik: cleanNik });
   }
 
-  if (input.email && input.email.trim() !== '') {
-    orConditions.push({ email: input.email });
+  if (cleanEmail && !cleanEmail.toLowerCase().endsWith('@example.com')) {
+    orConditions.push({ email: cleanEmail });
   }
 
   const exists = await prisma.alumni.findFirst({
@@ -118,9 +133,9 @@ export async function createMasterAlumni(input: MasterAlumniCreateInput) {
 
   if (exists) {
     const conflictingFields = [];
-    if (exists.nisn === input.nisn) conflictingFields.push('NISN');
-    if (input.nik && exists.nik === input.nik) conflictingFields.push('NIK');
-    if (input.email && exists.email === input.email) conflictingFields.push('Email');
+    if (exists.nisn === cleanNisn) conflictingFields.push('NISN');
+    if (cleanNik && exists.nik === cleanNik) conflictingFields.push('NIK');
+    if (cleanEmail && exists.email === cleanEmail) conflictingFields.push('Email');
     
     throw HttpError.conflict(`${conflictingFields.join(', ')} sudah terdaftar`);
   }
@@ -154,11 +169,11 @@ export async function listMasterAlumni(query: ListQueryInput) {
       { namaLengkap: { contains: search } },
       { nisn: { contains: search } },
       { nik: { contains: search } },
-      { email: { contains: search } },
     ];
   }
-  if (jurusan) where.jurusan = jurusan;
-  if (statusTracer) where.tracerStatus = statusTracer as TracerStatus;
+
+  if (jurusan && jurusan !== 'ALL') where.jurusan = jurusan;
+  if (statusTracer && statusTracer !== 'ALL' as any) where.tracerStatus = statusTracer;
   if (tahunLulus) where.tahunLulus = tahunLulus;
 
   const [data, total] = await Promise.all([
@@ -167,7 +182,7 @@ export async function listMasterAlumni(query: ListQueryInput) {
       select: selectFields(),
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: { [sortBy === 'nama' ? 'namaLengkap' : sortBy]: sortOrder },
     }),
     prisma.alumni.count({ where }),
   ]);
@@ -176,46 +191,43 @@ export async function listMasterAlumni(query: ListQueryInput) {
 }
 
 export async function updateMasterAlumni(id: string, input: MasterAlumniUpdateInput) {
-  await getMasterAlumni(id);
+  const exists = await prisma.alumni.findUnique({ where: { id } });
+  if (!exists) throw HttpError.notFound('Data alumni tidak ditemukan');
 
-  const orConditions: Array<Record<string, string>> = [];
-
-  if (input.nisn && input.nisn.trim() !== '') {
-    orConditions.push({ nisn: input.nisn });
-  }
-  if (input.nik && input.nik.trim() !== '') {
-    orConditions.push({ nik: input.nik });
-  }
-  if (input.email && input.email.trim() !== '') {
-    orConditions.push({ email: input.email });
+  if (input.nisn && input.nisn.trim() !== exists.nisn) {
+    const duplicate = await prisma.alumni.findUnique({ where: { nisn: input.nisn.trim() } });
+    if (duplicate) throw HttpError.conflict('NISN sudah digunakan oleh alumni lain');
   }
 
-  if (orConditions.length > 0) {
-    const exists = await prisma.alumni.findFirst({
-      where: {
-        OR: orConditions,
-        NOT: { id },
-      },
-    });
-    if (exists) {
-      const conflictingFields = [];
-      if (input.nisn && exists.nisn === input.nisn) conflictingFields.push('NISN');
-      if (input.nik && exists.nik === input.nik) conflictingFields.push('NIK');
-      if (input.email && exists.email === input.email) conflictingFields.push('Email');
-      throw HttpError.conflict(`${conflictingFields.join(', ')} sudah digunakan`);
-    }
+  const cleanNik = cleanStringOrNull(input.nik);
+  if (cleanNik && cleanNik !== exists.nik) {
+    const duplicate = await prisma.alumni.findUnique({ where: { nik: cleanNik } });
+    if (duplicate) throw HttpError.conflict('NIK sudah digunakan oleh alumni lain');
+  }
+
+  const cleanEmail = cleanStringOrNull(input.email);
+  if (cleanEmail && cleanEmail !== exists.email) {
+    const duplicate = await prisma.alumni.findUnique({ where: { email: cleanEmail } });
+    if (duplicate) throw HttpError.conflict('Email sudah digunakan oleh alumni lain');
   }
 
   return prisma.alumni.update({
     where: { id },
-    data: mapUpdateInput(input),
+    data: mapUpdateInput(input) as any,
     select: selectFields(),
   });
 }
 
 export async function deleteMasterAlumni(id: string) {
-  await getMasterAlumni(id);
-  await prisma.alumni.delete({ where: { id } });
+  // Dukung penghapusan via id cuid maupun via NISN
+  const exists = await prisma.alumni.findFirst({
+    where: {
+      OR: [{ id }, { nisn: id }],
+    },
+  });
+  if (!exists) throw HttpError.notFound('Data alumni tidak ditemukan');
+
+  await prisma.alumni.delete({ where: { id: exists.id } });
   return { success: true };
 }
 
@@ -227,18 +239,28 @@ export async function importMasterAlumni(input: ImportCsvInput) {
   const errors: Array<{ nisn: string; messages: string[] }> = [];
 
   for (const rawRecord of records) {
-    // Validasi tiap baris secara terpisah: baris bermasalah dilewati,
-    // tidak menggagalkan seluruh batch impor.
-    const parsed = masterAlumniCreateSchema.safeParse(rawRecord);
+    const raw = (rawRecord || {}) as Record<string, any>;
+    // Normalisasi field jika menggunakan penamaan snake_case dari excel
+    const normalizedRecord = {
+      ...raw,
+      nisn: String(raw.nisn ?? '').trim(),
+      nama: String(raw.nama ?? raw.namaLengkap ?? raw.nama_lengkap ?? '').trim(),
+      jurusan: String(raw.jurusan ?? '').trim(),
+      tahunLulus: raw.tahunLulus ?? raw.tahun_lulus ?? 2024,
+      noWhatsapp: raw.noWhatsapp ?? raw.no_wa ?? raw.no_whatsapp ?? '',
+      nik: raw.nik ? String(raw.nik).trim() : '',
+      email: raw.email ? String(raw.email).trim() : '',
+    };
+
+    const parsed = masterAlumniCreateSchema.safeParse(normalizedRecord);
     if (!parsed.success) {
       invalid++;
-      const recordData = (rawRecord || {}) as Record<string, unknown>;
       const messages = parsed.error.issues.map((issue) => {
         const path = issue.path.join('.');
         return path ? `${path}: ${issue.message}` : issue.message;
       });
       errors.push({
-        nisn: typeof recordData.nisn === 'string' ? recordData.nisn : '-',
+        nisn: normalizedRecord.nisn || '-',
         messages,
       });
       continue;
@@ -307,11 +329,7 @@ function selectFields() {
     tracerStatus: true,
     submissionId: true,
     submittedAt: true,
-    jenisKelamin: true,
-    avatarUrl: true,
-    pekerjaan: true,
-    kota: true,
-    kampus: true,
+    createdAt: true,
     namaSekolah: true,
     npsn: true,
     statusSekolah: true,
@@ -321,6 +339,7 @@ function selectFields() {
     lamaProgram: true,
     provinsiSmk: true,
     kabKotaSmk: true,
+    jenisKelamin: true,
     usia: true,
     statusMenikah: true,
     provinsiDomisili: true,
@@ -355,7 +374,5 @@ function selectFields() {
     pendapatanStudiSambilBekerjaUmk: true,
     pendapatanStudiSambilBerwirausahaUmp: true,
     pendapatanStudiSambilBerwirausahaUmk: true,
-    createdAt: true,
-    updatedAt: true,
   };
 }

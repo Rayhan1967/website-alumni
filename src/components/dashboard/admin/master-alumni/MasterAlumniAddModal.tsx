@@ -14,7 +14,7 @@ interface MasterAlumniAddModalProps {
     tahunLulus: number;
     noWhatsapp: string;
     email: string;
-  }) => boolean;
+  }) => boolean | Promise<boolean>;
   jurusanOptions: { value: string; label: string }[];
 }
 
@@ -37,7 +37,7 @@ export const MasterAlumniAddModal: React.FC<MasterAlumniAddModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError("");
 
@@ -65,7 +65,7 @@ export const MasterAlumniAddModal: React.FC<MasterAlumniAddModalProps> = ({
         ? newEmail.trim()
         : "";
 
-    const success = onSubmit({
+    const success = await onSubmit({
       nisn: newNisn.trim(),
       nik: cleanNik,
       nama: newNama.trim(),

@@ -85,9 +85,9 @@ export const AdminMasterAlumniTab: React.FC = () => {
     setTimeout(() => setToastMessage(""), 4000);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteConfirmAlumni) {
-      deleteMasterAlumni(deleteConfirmAlumni.id);
+      await deleteMasterAlumni(deleteConfirmAlumni.id);
       showToast(`Data ${deleteConfirmAlumni.nama} berhasil dihapus.`);
       setDeleteConfirmAlumni(null);
     }
@@ -179,7 +179,7 @@ export const AdminMasterAlumniTab: React.FC = () => {
     );
   };
 
-  const handleCreateSingle = (data: {
+  const handleCreateSingle = async (data: {
     nisn: string;
     nik: string;
     nama: string;
@@ -188,7 +188,7 @@ export const AdminMasterAlumniTab: React.FC = () => {
     noWhatsapp: string;
     email: string;
   }) => {
-    const success = addSingleMasterAlumni(data as any);
+    const success = await addSingleMasterAlumni(data as any);
     if (success) {
       showToast(`Data siswa ${data.nama} berhasil ditambahkan.`);
       return true;

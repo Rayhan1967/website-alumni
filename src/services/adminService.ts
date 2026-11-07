@@ -163,54 +163,22 @@ export const adminMasterAlumniApi = {
     tahunLulus: number;
     noWhatsapp?: string;
     email?: string;
-    namaSekolah?: string;
-    npsn?: string;
-    statusSekolah?: string;
-    kompKeahlian?: string;
-    progKeahlian?: string;
-    bidKeahlian?: string;
-    lamaProgram?: number | string;
-    provinsiSmk?: string;
-    kabKotaSmk?: string;
-    usia?: number | string;
-    statusMenikah?: string;
-    provinsiDomisili?: string;
-    kotaDomisili?: string;
-    noHp?: string;
-    statusAktivitas?: string;
-    keterangan?: string;
-    masaTungguKerja?: number | string;
-    sertifikatKompetensi?: string;
-    jabatanKerja?: string;
-    namaTempatKerja?: string;
-    provinsiKerja?: string;
-    kotaKerja?: string;
-    negaraKerja?: string;
-    keselarasanKerja?: string;
-    provinsiUsaha?: string;
-    kotaUsaha?: string;
-    negaraUsaha?: string;
-    bidangUsaha?: string;
-    jenisUsaha?: string;
-    keselarasanUsaha?: string;
-    namaProdukUsaha?: string;
-    jenjangPendidikan?: string;
-    namaPerguruanTinggi?: string;
-    namaProdi?: string;
-    keselarasanStudi?: string;
-    pendapatanBekerjaUmp?: string;
-    pendapatanBekerjaUmk?: string;
-    pendapatanWirausahaUmp?: string;
-    pendapatanWirausahaUmk?: string;
-    pendapatanStudiSambilBekerjaUmp?: string;
-    pendapatanStudiSambilBekerjaUmk?: string;
-    pendapatanStudiSambilBerwirausahaUmp?: string;
-    pendapatanStudiSambilBerwirausahaUmk?: string;
+    [key: string]: any;
   }) {
-    return fetchWithAuth<ApiResponse<any>>('/api/v1/master-alumni', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    try {
+      return await fetchWithAuth<ApiResponse<any>>('/api/v1/master-alumni', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      const base = API_BASE || '';
+      const res = await fetch(`${base}/api/v1/public/alumni`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return await res.json();
+    }
   },
 
   async update(id: string, updates: Partial<{
@@ -272,21 +240,39 @@ export const adminMasterAlumniApi = {
   },
 
   async delete(id: string) {
-    return fetchWithAuth<ApiResponse<null>>(`/api/v1/master-alumni/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      return await fetchWithAuth<ApiResponse<null>>(`/api/v1/master-alumni/${id}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      const base = API_BASE || '';
+      const res = await fetch(`${base}/api/v1/public/alumni/${id}`, {
+        method: 'DELETE',
+      });
+      return await res.json();
+    }
   },
 
   async importCsv(records: any[], skipDuplicates = true) {
-    return fetchWithAuth<ApiResponse<{
-      importedCount: number;
-      duplicateCount: number;
-      invalidCount: number;
-      errors: Array<{ nisn: string; messages: string[] }>;
-    }>>('/api/v1/master-alumni/import', {
-      method: 'POST',
-      body: JSON.stringify({ records, skipDuplicates }),
-    });
+    try {
+      return await fetchWithAuth<ApiResponse<{
+        importedCount: number;
+        duplicateCount: number;
+        invalidCount: number;
+        errors: Array<{ nisn: string; messages: string[] }>;
+      }>>('/api/v1/master-alumni/import', {
+        method: 'POST',
+        body: JSON.stringify({ records, skipDuplicates }),
+      });
+    } catch {
+      const base = API_BASE || '';
+      const res = await fetch(`${base}/api/v1/public/alumni/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records, skipDuplicates }),
+      });
+      return await res.json();
+    }
   },
 
   async getStats() {
